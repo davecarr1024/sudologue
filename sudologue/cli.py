@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 
 from sudologue.model.board import Board
-from sudologue.proof.proposition import Axiom, Elimination, Lemma
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solve_result import SolveResult, SolveStatus
 from sudologue.solver.solver import Solver
@@ -42,16 +41,11 @@ def format_proof(result: SolveResult) -> str:
         thm = step.theorem
         lines.append(f"Step {i}: {thm} [{thm.rule}]")
 
-        for premise in thm.premises:
-            if isinstance(premise, Lemma):
-                lines.append(f"  {premise}")
-                for elim in premise.premises:
-                    if isinstance(elim, Elimination):
-                        axiom = elim.premises[0]
-                        if isinstance(axiom, Axiom):
-                            lines.append(
-                                f"    {elim} because {axiom}" f" in {elim.house}"
-                            )
+        for lemma in thm.premises:
+            lines.append(f"  {lemma}")
+            for elim in lemma.premises:
+                axiom = elim.premises[0]
+                lines.append(f"    {elim} because {axiom} in {elim.house}")
         lines.append("")
 
     if result.status == SolveStatus.SOLVED:
