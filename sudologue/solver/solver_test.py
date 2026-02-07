@@ -2,8 +2,10 @@ import pytest
 
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
-from sudologue.proof.proposition import Lemma
+from sudologue.model.house import HouseType, all_houses
+from sudologue.proof.proposition import Axiom, Elimination, Lemma, Theorem
 from sudologue.proof.rules.naked_single import NakedSingle
+from sudologue.proof.scoring import proof_size
 from sudologue.solver.solve_result import SolveStatus
 from sudologue.solver.solver import Solver
 
@@ -119,3 +121,35 @@ class TestSolverProofInspection:
             lemma = thm.premises[0]
             assert isinstance(lemma, Lemma)
             assert thm.value in lemma.domain or len(lemma.domain) == 1
+
+
+class TestSolverScoring:
+    def test_scorer_prefers_smaller_proof(self) -> None:
+        house = next(
+            h for h in all_houses(4) if h.house_type == HouseType.ROW and h.index == 0
+        )
+        ax1 = Axiom(Cell(0, 0), 1)
+        ax2 = Axiom(Cell(0, 1), 2)
+        ax3 = Axiom(Cell(0, 2), 3)
+        e1 = Elimination(Cell(0, 3), 1, house, (ax1,))
+        e2 = Elimination(Cell(0, 3), 2, house, (ax2,))
+        e3 = Elimination(Cell(0, 3), 3, house, (ax3,))
+
+        lemma_short = Lemma(Cell(0, 3), frozenset({4}), ())
+        lemma_long = Lemma(Cell(0, 3), frozenset({4}), (e1, e2, e3))
+
+        thm_short = Theorem(Cell(0, 3), 4, "stub", (lemma_short,))
+        thm_long = Theorem(Cell(0, 3), 4, "stub", (lemma_long,))
+
+        class StubRule:
+            @property
+            def name(self) -> str:
+                return "stub"
+
+            def apply(self, derivation: object) -> list[Theorem]:
+                return [thm_long, thm_short]
+
+        board = Board.from_string("1230341221434321", size=4)
+        solver = Solver([StubRule()], scorer=proof_size)
+        result = solver.solve(board)
+        assert result.steps[0].theorem is thm_short

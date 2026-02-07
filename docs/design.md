@@ -149,6 +149,8 @@ Styles may override these defaults without changing correctness.
 2. **Normal** — omit axioms, keep eliminations.
 3. **Full** — include axioms (complete proof chain).
 
+The solver can optionally use a scoring hook to choose among multiple theorems produced by a rule (e.g., prefer smaller proofs), without changing rule priority.
+
 ## Solver Loop
 
 ```mermaid

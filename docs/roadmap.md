@@ -37,7 +37,7 @@ Goal: make explanations minimal, policy-driven, and stable.
 
 - [x] Implement backward slicing over the proof DAG (terse/normal/full)
 - [x] Add narration policies (range-first vs domain-first; verbosity modes)
-- [ ] Add proof scoring hooks for choosing among theorems
+- [x] Add proof scoring hooks for choosing among theorems
 - [x] Tests: slicing removes redundant premises without breaking validity
 
 ### Phase 4: Mid-Level Techniques
