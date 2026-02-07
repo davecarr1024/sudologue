@@ -4,6 +4,7 @@ from pathlib import Path
 
 from sudologue.cli import format_board, format_proof, main
 from sudologue.model.board import Board
+from sudologue.narration.policy import Verbosity
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solver import Solver
 
@@ -67,6 +68,14 @@ class TestFormatProof:
         # Should contain domain and elimination details
         assert "domain" in text
         assert "because" in text
+
+    def test_terse_output(self) -> None:
+        board = Board.from_string("1230341221434321", size=4)
+        result = Solver([NakedSingle()]).solve(board)
+        text = format_proof(result, verbosity=Verbosity.TERSE)
+        assert "Step 1:" in text
+        assert "domain" not in text
+        assert "because" not in text
 
 
 class TestMainCli:

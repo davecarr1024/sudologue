@@ -5,6 +5,9 @@ import sys
 from pathlib import Path
 
 from sudologue.model.board import Board
+from sudologue.narration.policy import Verbosity
+from sudologue.proof.identity import prop_id
+from sudologue.proof.minimizer import slice_proof
 from sudologue.proof.rules.hidden_single import HiddenSingle
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solve_result import SolveResult, SolveStatus
@@ -30,7 +33,7 @@ def format_board(board: Board) -> str:
     return "\n".join(lines)
 
 
-def format_proof(result: SolveResult) -> str:
+def format_proof(result: SolveResult, verbosity: Verbosity = Verbosity.FULL) -> str:
     """Render the solve trace as a human-readable proof."""
     lines: list[str] = []
 
@@ -42,11 +45,24 @@ def format_proof(result: SolveResult) -> str:
         thm = step.theorem
         lines.append(f"Step {i}: {thm} [{thm.rule}]")
 
+        if verbosity == Verbosity.TERSE:
+            lines.append("")
+            continue
+
+        slice_ids = {prop_id(prop) for prop in slice_proof(thm, verbosity)}
+
         for premise in thm.premises:
+            if prop_id(premise) not in slice_ids:
+                continue
             lines.append(f"  {premise}")
             for elim in premise.premises:
+                if prop_id(elim) not in slice_ids:
+                    continue
                 axiom = elim.premises[0]
-                lines.append(f"    {elim} because {axiom} in {elim.house}")
+                if prop_id(axiom) in slice_ids:
+                    lines.append(f"    {elim} because {axiom} in {elim.house}")
+                else:
+                    lines.append(f"    {elim}")
         lines.append("")
 
     if result.status == SolveStatus.SOLVED:

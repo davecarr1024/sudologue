@@ -143,6 +143,12 @@ Narration is a policy layer, not rule logic:
 
 Styles may override these defaults without changing correctness.
 
+**Verbosity (proof minimization):**
+
+1. **Terse** — theorem + immediate premises only.
+2. **Normal** — omit axioms, keep eliminations.
+3. **Full** — include axioms (complete proof chain).
+
 ## Solver Loop
 
 ```mermaid
@@ -170,9 +176,8 @@ Boards validate invariants on construction: no duplicate values in any house and
 
 ## Future Extensions (Range-First + Minimization)
 
-1. **Proof minimization** — keep derivation maximal; slice explanations lazily at narration time. Minimization is backward slicing of the proof DAG from a theorem, optionally dropping redundant premises per narration policy. Optional eager scoring can be used to choose among competing theorems.
-2. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
-3. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
+1. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
+2. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
 
 ## Testing Strategy
 
