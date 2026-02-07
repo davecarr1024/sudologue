@@ -100,8 +100,8 @@ Theorem(place v at cell)
 
 ```mermaid
 flowchart TD
-  A1[Axiom(s)] --> E1[Eliminations for cell]
-  E1 --> L1[Domain Lemma: domain(cell) = {v}]
+  A1[Axioms] --> E1[Eliminations for cell]
+  E1 --> L1[Domain Lemma]
   L1 --> T1[Theorem: place v at cell]
 ```
 
@@ -115,7 +115,7 @@ Theorem(place v at target)
 
 ```mermaid
 flowchart TD
-  A2[Axiom(s)] --> E2[Eliminations: other cells ≠ v]
+  A2[Axioms] --> E2[Eliminations: other cells ≠ v]
   E2 --> T2[Theorem: place v at target]
 ```
 
