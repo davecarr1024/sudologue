@@ -2,6 +2,7 @@ from collections.abc import Iterable
 
 from sudologue.proof.proposition import (
     Axiom,
+    Candidate,
     Elimination,
     Lemma,
     Proposition,
@@ -28,6 +29,8 @@ def prop_id(prop: Proposition) -> PropId:
             prop.value,
             cells,
         )
+    if isinstance(prop, Candidate):
+        return ("Candidate", prop.cell.row, prop.cell.col, prop.value)
     assert isinstance(prop, Theorem)
     return ("Theorem", prop.cell.row, prop.cell.col, prop.value)
 

@@ -4,6 +4,7 @@ from sudologue.model.cell import Cell
 from sudologue.model.house import House, HouseType, all_houses
 from sudologue.proof.proposition import (
     Axiom,
+    Candidate,
     Elimination,
     Lemma,
     NotCandidate,
@@ -125,6 +126,26 @@ class TestRangeLemma:
         rl = RangeLemma(house, 2, (Cell(0, 1),), ())
         with pytest.raises(AttributeError):
             rl.value = 3  # type: ignore[misc]
+
+
+class TestCandidate:
+    def test_construction(self) -> None:
+        lemma = Lemma(Cell(2, 3), frozenset({4}), ())
+        cand = Candidate(Cell(2, 3), 4, (lemma,))
+        assert cand.cell == Cell(2, 3)
+        assert cand.value == 4
+        assert cand.premises == (lemma,)
+
+    def test_str(self) -> None:
+        lemma = Lemma(Cell(2, 3), frozenset({4}), ())
+        cand = Candidate(Cell(2, 3), 4, (lemma,))
+        assert str(cand) == "candidate (2,3) = 4"
+
+    def test_frozen(self) -> None:
+        lemma = Lemma(Cell(2, 3), frozenset({4}), ())
+        cand = Candidate(Cell(2, 3), 4, (lemma,))
+        with pytest.raises(AttributeError):
+            cand.value = 1  # type: ignore[misc]
 
 
 class TestTheorem:

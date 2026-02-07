@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
 from sudologue.model.house import all_houses
-from sudologue.proof.proposition import Axiom, Elimination, Lemma, RangeLemma
+from sudologue.proof.proposition import Axiom, Candidate, Elimination, Lemma, RangeLemma
 
 
 @dataclass(frozen=True)
@@ -15,6 +15,7 @@ class Derivation:
     eliminations: tuple[Elimination, ...]
     lemmas: tuple[Lemma, ...]
     range_lemmas: tuple[RangeLemma, ...]
+    candidates: tuple[Candidate, ...]
 
 
 def derive(board: Board) -> Derivation:
@@ -24,12 +25,14 @@ def derive(board: Board) -> Derivation:
     eliminations = _derive_eliminations(board, axiom_by_cell)
     lemmas = _derive_lemmas(board, eliminations)
     range_lemmas = _derive_ranges(board, eliminations)
+    candidates = _derive_candidates(lemmas)
     return Derivation(
         size=board.size,
         axioms=axioms,
         eliminations=eliminations,
         lemmas=lemmas,
         range_lemmas=range_lemmas,
+        candidates=candidates,
     )
 
 
@@ -114,4 +117,13 @@ def _derive_ranges(
                     premises.append(elim)
             result.append(RangeLemma(house, value, tuple(cells), tuple(premises)))
 
+    return tuple(result)
+
+
+def _derive_candidates(lemmas: tuple[Lemma, ...]) -> tuple[Candidate, ...]:
+    """Create candidate propositions from domain lemmas."""
+    result: list[Candidate] = []
+    for lemma in lemmas:
+        for value in sorted(lemma.domain):
+            result.append(Candidate(lemma.cell, value, (lemma,)))
     return tuple(result)

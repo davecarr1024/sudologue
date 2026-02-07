@@ -1,7 +1,14 @@
 from sudologue.model.cell import Cell
 from sudologue.model.house import HouseType, all_houses
 from sudologue.proof.identity import collect_proof, dedupe_propositions, prop_id
-from sudologue.proof.proposition import Axiom, Elimination, Lemma, RangeLemma, Theorem
+from sudologue.proof.proposition import (
+    Axiom,
+    Candidate,
+    Elimination,
+    Lemma,
+    RangeLemma,
+    Theorem,
+)
 
 
 def _row0_4x4():
@@ -33,6 +40,12 @@ class TestPropId:
         rl1 = RangeLemma(house, 2, (Cell(0, 1), Cell(0, 2)), ())
         rl2 = RangeLemma(house, 2, (Cell(0, 1), Cell(0, 2)), ())
         assert prop_id(rl1) == prop_id(rl2)
+
+    def test_candidate_id_stable(self) -> None:
+        lemma = Lemma(Cell(2, 3), frozenset({4}), ())
+        c1 = Candidate(Cell(2, 3), 4, (lemma,))
+        c2 = Candidate(Cell(2, 3), 4, (lemma,))
+        assert prop_id(c1) == prop_id(c2)
 
 
 class TestIndexing:

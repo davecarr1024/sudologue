@@ -2,7 +2,7 @@ from sudologue.model.board import Board
 from sudologue.model.cell import Cell
 from sudologue.model.house import HouseType
 from sudologue.proof.engine import derive
-from sudologue.proof.proposition import Axiom
+from sudologue.proof.proposition import Axiom, Candidate
 
 
 class TestExtractAxioms:
@@ -160,6 +160,14 @@ class TestDeriveRanges:
         assert range_lemma.cells == (Cell(3, 3),)
         premise_cells = {elim.cell for elim in range_lemma.premises}
         assert premise_cells == {Cell(3, 0), Cell(3, 1), Cell(3, 2)}
+
+
+class TestDeriveCandidates:
+    def test_candidates_from_singleton_domain(self) -> None:
+        board = Board.from_string("0001000230000000", size=4)
+        d = derive(board)
+        lemma = next(lem for lem in d.lemmas if lem.cell == Cell(2, 3))
+        assert Candidate(Cell(2, 3), 4, (lemma,)) in d.candidates
 
 
 class TestDerivationImmutability:

@@ -27,7 +27,7 @@ Goal: expose range-first reasoning as first-class proof objects.
 
 - [x] Introduce `RangeLemma(house, value, cells, premises)`
 - [x] Define premises for RangeLemma based on NotCandidate facts
-- [ ] Optional explicit `Candidate` nodes (derived or computed)
+- [x] Optional explicit `Candidate` nodes (derived or computed)
 - [x] Update narrator to surface RangeLemma in hidden single explanations
 - [x] Tests: range lemma derivation, premise coverage, hidden single proof chains
 

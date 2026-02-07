@@ -32,6 +32,12 @@ Lemma: domain of (2,3) = {4}    [from: (2,3) ≠ 1, (2,3) ≠ 2, (2,3) ≠ 3]
 RangeLemma: range of row 3 for 1 = {(3,3)}    [from: (3,0) ≠ 1, (3,1) ≠ 1, (3,2) ≠ 1]
 ```
 
+**Candidate** — A possible value for a cell, derived from its domain lemma.
+
+```
+Candidate: (2,3) = 4    [from: domain of (2,3) = {4}]
+```
+
 **Theorem** — A proven placement derived by a rule.
 
 ```
@@ -42,7 +48,7 @@ Every proposition is a frozen dataclass that holds its conclusion and premise re
 
 ## Derived Views (Candidates, Domains, Ranges)
 
-Candidates are a **derived view**: a value is a candidate if it has not been eliminated in the current derivation. Candidates are defined over the base domain `v ∈ {1..N}`. Eliminations remove values from this base domain for a specific cell.
+Candidates are a **derived view**: a value is a candidate if it has not been eliminated in the current derivation. Candidates are defined over the base domain `v ∈ {1..N}`. Eliminations remove values from this base domain for a specific cell. For narration and proof tooling, candidates are also materialized as `Candidate` propositions derived from domain lemmas.
 
 ```
 Candidate(cell, v)  <=>  no elimination (cell ≠ v) exists in the derivation
@@ -164,10 +170,9 @@ Boards validate invariants on construction: no duplicate values in any house and
 
 ## Future Extensions (Range-First + Minimization)
 
-1. **Candidate promotion** — if needed for narration or advanced rules, introduce a computed or explicit `Candidate` node without breaking the interface layer.
-2. **Proof minimization** — keep derivation maximal; slice explanations lazily at narration time. Minimization is backward slicing of the proof DAG from a theorem, optionally dropping redundant premises per narration policy. Optional eager scoring can be used to choose among competing theorems.
-3. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
-4. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
+1. **Proof minimization** — keep derivation maximal; slice explanations lazily at narration time. Minimization is backward slicing of the proof DAG from a theorem, optionally dropping redundant premises per narration policy. Optional eager scoring can be used to choose among competing theorems.
+2. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
+3. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
 
 ## Testing Strategy
 

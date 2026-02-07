@@ -59,6 +59,18 @@ class Lemma:
 
 
 @dataclass(frozen=True)
+class Candidate:
+    """A possible value for a cell, derived from its domain lemma."""
+
+    cell: Cell
+    value: int
+    premises: tuple[Lemma, ...]
+
+    def __str__(self) -> str:
+        return f"candidate {self.cell} = {self.value}"
+
+
+@dataclass(frozen=True)
 class Theorem:
     """A proven placement backed by a proof chain."""
 
@@ -72,4 +84,4 @@ class Theorem:
 
 
 Premise = Lemma | RangeLemma
-Proposition = Axiom | Elimination | RangeLemma | Lemma | Theorem
+Proposition = Axiom | Elimination | RangeLemma | Lemma | Candidate | Theorem
