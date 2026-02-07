@@ -26,6 +26,14 @@ Elimination: (2,3) ≠ 1    [from: (0,3) = 1; shared house: column 3]
 Lemma: domain of (2,3) = {4}    [from: (2,3) ≠ 1, (2,3) ≠ 2, (2,3) ≠ 3]
 ```
 
+**Range Lemma** — A complementary statement that, for a given house and value, lists the only cells where that value can appear. It is the dual of a domain lemma: instead of proving what a cell can contain, it proves where a value must live within a house.
+
+```
+Range Lemma: in Box 3, value 1 ∈ {(2,3), (3,3)}
+```
+
+Range lemmas compose naturally with eliminations: if all candidate cells for a value in a box lie in a single row or column, that value can be eliminated from the rest of that row or column outside the box (pointing pairs/box-line reduction).
+
 **Theorem** — A proven placement. The final conclusion of a proof chain. A theorem cites the lemma (or lemmas) that justify it, and through them, the full chain back to axioms.
 
 ```
@@ -169,6 +177,8 @@ Because every theorem carries its full proof chain, narration is just proof rend
 **Proofs, not procedures.** A procedural solver embeds its reasoning in rule code — you see the answer but not the argument. In this design, the reasoning *is* the output — a composable proof chain where each step cites its premises.
 
 **Composability.** Complex reasoning emerges from combining simple propositions. A naked single proof is: axioms -> eliminations -> domain lemma -> theorem. A hidden single proof combines domain lemmas across a house. Future rules (naked pairs, X-Wings) compose the same building blocks in new ways.
+
+Range lemmas add a second, dual building block: domain lemmas are cell-centric; range lemmas are value-in-house-centric. Together they support more complex reasoning (pointing pairs, box-line reduction, and other candidate eliminations) while preserving the same atomic proof chain.
 
 ## Complex Constructions (Atomic + Composable)
 
