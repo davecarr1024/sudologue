@@ -7,6 +7,7 @@
 - Proof engine with derived views (candidates/domains/ranges)
 - Solver loop, CLI, and 4x4 + 9x9 puzzle coverage
 - Naked single and hidden single with range-first narration
+- Rule split: elimination rules (derive facts) vs selection rules (place values)
 
 ## Remaining Work (Phased Plan)
 
@@ -44,12 +45,20 @@ Goal: make explanations minimal, policy-driven, and stable.
 
 Goal: progress beyond singles while preserving proof structure.
 
-- [x] Naked pair / hidden pair (domain/range based)
+- [x] Naked pair (domain based)
 - [x] Pointing pairs / box-line reduction (range-first)
 - [ ] Add 9x9 puzzles that require these rules
 - [x] Tests: rule-specific derivations
 
-### Phase 5: Advanced Fish
+### Phase 5: Structure Lemmas
+
+Goal: represent multi-digit logic as structure, then emit eliminations from it.
+
+- [ ] Introduce `Pair(house, digits, cells)` (and later triple/quad) as a structure lemma
+- [ ] Hidden pair as two-step: structure observation + digit-aligned eliminations
+- [ ] Narration: show structure nodes in full mode, hide in terse
+
+### Phase 6: Advanced Fish
 
 Goal: scalable pattern rules with clean proofs.
 

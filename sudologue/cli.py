@@ -38,6 +38,8 @@ def _format_elimination_reason(
 
     if all(isinstance(reason, RangeLemma) for reason in reasons):
         range_reasons = [reason for reason in reasons if isinstance(reason, RangeLemma)]
+        if any(reason.value != elim.value for reason in range_reasons):
+            return "because " + "; ".join(str(reason) for reason in reasons)
         houses = {reason.house for reason in range_reasons}
         cells_sets = {reason.cells for reason in range_reasons}
         values = sorted({reason.value for reason in range_reasons})
@@ -78,6 +80,8 @@ def _format_elimination_reason(
 
     if all(isinstance(reason, Lemma) for reason in reasons):
         lemma_reasons = [reason for reason in reasons if isinstance(reason, Lemma)]
+        if any(elim.value not in reason.domain for reason in lemma_reasons):
+            return "because " + "; ".join(str(reason) for reason in reasons)
         domains = {reason.domain for reason in lemma_reasons}
         if len(domains) == 1:
             domain = next(iter(domains))

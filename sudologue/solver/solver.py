@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 from sudologue.model.board import Board
 from sudologue.proof.engine import derive
 from sudologue.proof.proposition import Theorem
-from sudologue.proof.rules.rule import Rule
+from sudologue.proof.rules.rule import SelectionRule
 from sudologue.solver.solve_result import SolveResult, SolveStatus, SolveStep
 
 
@@ -11,7 +11,9 @@ class Solver:
     """Solve loop: derive propositions, search for theorems, place values."""
 
     def __init__(
-        self, rules: Sequence[Rule], scorer: Callable[[Theorem], int] | None = None
+        self,
+        rules: Sequence[SelectionRule],
+        scorer: Callable[[Theorem], int] | None = None,
     ) -> None:
         self._rules = list(rules)
         self._scorer = scorer

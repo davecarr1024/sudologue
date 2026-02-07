@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
-from sudologue.model.house import House, HouseType, all_houses
+from sudologue.model.house import HouseType, all_houses
 from sudologue.proof.proposition import Axiom, Candidate, Elimination, Lemma, RangeLemma
 
 
@@ -173,34 +173,6 @@ def _derive_pair_eliminations(
                     results.append(
                         Elimination(lemma.cell, value, house, tuple(pair_lemmas))
                     )
-
-    # Hidden pairs
-    range_by_house: dict[House, list[RangeLemma]] = {}
-    for range_lemma in range_lemmas:
-        if len(range_lemma.cells) == 2:
-            range_by_house.setdefault(range_lemma.house, []).append(range_lemma)
-
-    for house, house_ranges in range_by_house.items():
-        by_cells: dict[tuple[Cell, ...], list[RangeLemma]] = {}
-        for range_lemma in house_ranges:
-            by_cells.setdefault(range_lemma.cells, []).append(range_lemma)
-
-        for cells, ranges in by_cells.items():
-            if len(ranges) != 2:
-                continue
-            pair_values = {ranges[0].value, ranges[1].value}
-            for cell in cells:
-                lemma = lemmas_by_cell.get(cell)
-                if lemma is None:
-                    continue
-                for value in lemma.domain:
-                    if value in pair_values:
-                        continue
-                    key = (cell, value)
-                    if key in existing_keys:
-                        continue
-                    existing_keys.add(key)
-                    results.append(Elimination(cell, value, house, tuple(ranges)))
 
     return tuple(results)
 

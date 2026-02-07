@@ -122,9 +122,9 @@ class TestDeriveLemmas:
         board = Board.from_string("0001000230000000", size=4)
         d = derive(board)
         # Cell (3,3) is in col 3 (has 1, 2) and box 3 (no other givens there)
-        # and row 3 (no givens). So eliminations: ≠1, ≠2, ≠4. Domain = {3}.
+        # and row 3 (no givens). So eliminations: ≠1, ≠2. Domain = {3, 4}.
         lemma_33 = next(lem for lem in d.lemmas if lem.cell == Cell(3, 3))
-        assert lemma_33.domain == frozenset({3})
+        assert lemma_33.domain == frozenset({3, 4})
 
     def test_lemmas_in_scan_order(self) -> None:
         board = Board.from_string("0001000230000000", size=4)
@@ -178,14 +178,6 @@ class TestDerivePairs:
         assert all(isinstance(p, Lemma) for p in elim.premises)
         premise_cells = {p.cell for p in elim.premises if isinstance(p, Lemma)}
         assert premise_cells == {Cell(0, 2), Cell(0, 3)}
-
-    def test_hidden_pair_elimination(self) -> None:
-        board = Board.from_string("1000301201004001", size=4)
-        d = derive(board)
-        elim = next(e for e in d.eliminations if e.cell == Cell(2, 2) and e.value == 2)
-        assert all(isinstance(p, RangeLemma) for p in elim.premises)
-        premise_values = {p.value for p in elim.premises if isinstance(p, RangeLemma)}
-        assert premise_values == {3, 4}
 
 
 class TestDerivePointing:

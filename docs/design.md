@@ -2,7 +2,7 @@
 
 ## Overview
 
-Sudologue is a proof-first Sudoku solver. Every placement is a **theorem** supported by a **proof DAG** that traces back to the given board state. The solver never guesses; if no theorem can be proven, it stops.
+Sudologue is a proof-first Sudoku solver. Every placement is a **theorem** supported by a **proof DAG** that traces back to the given board state. The solver never guesses; if no theorem can be proven, it stops. The only atomic effect is an **elimination**; placements are certificates that all other candidates have already been eliminated.
 
 ## Core Propositions
 
@@ -14,7 +14,9 @@ Propositions are immutable facts with explicit premises. Together they form a pr
 Axiom: cell (0,3) = 1    [observed from board]
 ```
 
-**Elimination (NotCandidate)** — A derived fact that a cell cannot contain a value, justified by premises. In early rules, eliminations are justified directly by axioms; future rules may justify eliminations via lemmas or ranges while preserving the same premise structure.
+**Elimination (NotCandidate)** — A derived fact that a cell cannot contain a value, justified by premises. This is the **only atomic effect** in the system. In early rules, eliminations are justified directly by axioms; future rules may justify eliminations via lemmas or ranges while preserving the same premise structure.
+
+**Digit alignment invariant:** an elimination `(cell ≠ v)` must be justified by premises that speak about **v** (a placed `v`, or a range/domain statement for `v`).
 
 ```
 Elimination: (2,3) ≠ 1    [from: (0,3) = 1; shared house: column 3]
@@ -38,7 +40,7 @@ RangeLemma: range of row 3 for 1 = {(3,3)}    [from: (3,0) ≠ 1, (3,1) ≠ 1, (
 Candidate: (2,3) = 4    [from: domain of (2,3) = {4}]
 ```
 
-**Theorem** — A proven placement derived by a rule.
+**Theorem** — A proven placement selected from already-justified eliminations.
 
 ```
 Theorem: place 4 at (2,3)    [from: domain of (2,3) = {4}; by naked single]
@@ -86,15 +88,16 @@ Each theorem is immutable and tied to the board state at the step it was proven.
 
 ## Inference Rules
 
-**Built-in derivations** (computed every step):
+**Elimination rules** (computed every step, to saturation):
 
 1. **Axiom extraction** — create axioms for all placed values.
 2. **Elimination** — for each axiom, eliminate that value from peer cells.
 3. **Domain reduction** — for each empty cell, compute its domain lemma.
 4. **Range reduction** — for each `(house, value)`, compute its range lemma.
-5. **Pair eliminations** — apply naked/hidden pairs to derive additional eliminations; repeat until no new eliminations are found.
+5. **Pair eliminations** — apply naked pairs to derive additional eliminations; repeat until no new eliminations are found.
+6. **Box-line reduction** — apply pointing/claiming eliminations from range confinement.
 
-**Theorem-producing rules** (priority order):
+**Selection rules** (priority order):
 
 1. **Naked single** — if `domain(cell)` has size 1, place it.
 2. **Hidden single** — for each `(house, value)`, compute `range(house, value)`; if it has size 1, place it. Premises should be **targeted eliminations** proving `¬Candidate` for every other cell in the house. `Candidate(target, value)` is implied (can be included in full/strict proofs later).
@@ -156,8 +159,8 @@ The solver can optionally use a scoring hook to choose among multiple theorems p
 
 ```mermaid
 flowchart TD
-  S[Start board] --> D[Derive axioms, eliminations, domains]
-  D --> R[Apply rules in priority order]
+  S[Start board] --> D[Derive axioms + eliminate to saturation]
+  D --> R[Apply selection rules in priority order]
   R -->|Theorem found| P[Place value and record step]
   P --> D
   R -->|No theorem| X[Stuck]
@@ -179,7 +182,7 @@ Boards validate invariants on construction: no duplicate values in any house and
 
 ## Future Extensions (Range-First + Minimization)
 
-1. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
+1. **Advanced rules** — naked pairs (done), pointing/claiming (done), hidden pairs as explicit structure, X-Wing, Swordfish.
 2. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
 
 ## Testing Strategy
