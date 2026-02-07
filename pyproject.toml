@@ -67,6 +67,9 @@ exclude_lines = [
     "if __name__ == .__main__.:",
 ]
 
+[tool.poetry.scripts]
+sudologue = "sudologue.cli:main"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
