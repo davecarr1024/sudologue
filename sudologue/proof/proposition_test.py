@@ -70,6 +70,11 @@ class TestElimination:
         with pytest.raises(AttributeError):
             elim.value = 2  # type: ignore[misc]
 
+    def test_non_axiom_premise(self) -> None:
+        lemma = Lemma(Cell(0, 1), frozenset({3, 4}), ())
+        elim = Elimination(Cell(0, 2), 3, _row0_4x4(), (lemma,))
+        assert elim.premises == (lemma,)
+
 
 class TestNotCandidate:
     def test_alias(self) -> None:

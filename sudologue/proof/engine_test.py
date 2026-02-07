@@ -2,7 +2,7 @@ from sudologue.model.board import Board
 from sudologue.model.cell import Cell
 from sudologue.model.house import HouseType
 from sudologue.proof.engine import derive
-from sudologue.proof.proposition import Axiom, Candidate
+from sudologue.proof.proposition import Axiom, Candidate, Lemma, RangeLemma
 
 
 class TestExtractAxioms:
@@ -170,6 +170,24 @@ class TestDeriveCandidates:
         assert Candidate(Cell(2, 3), 4, (lemma,)) in d.candidates
 
 
+class TestDerivePairs:
+    def test_naked_pair_elimination(self) -> None:
+        board = Board.from_string("1000301220004301", size=4)
+        d = derive(board)
+        elim = next(e for e in d.eliminations if e.cell == Cell(0, 1) and e.value == 4)
+        assert all(isinstance(p, Lemma) for p in elim.premises)
+        premise_cells = {p.cell for p in elim.premises if isinstance(p, Lemma)}
+        assert premise_cells == {Cell(0, 2), Cell(0, 3)}
+
+    def test_hidden_pair_elimination(self) -> None:
+        board = Board.from_string("1000301201004001", size=4)
+        d = derive(board)
+        elim = next(e for e in d.eliminations if e.cell == Cell(2, 2) and e.value == 2)
+        assert all(isinstance(p, RangeLemma) for p in elim.premises)
+        premise_values = {p.value for p in elim.premises if isinstance(p, RangeLemma)}
+        assert premise_values == {3, 4}
+
+
 class TestDerivationImmutability:
     def test_frozen(self) -> None:
         board = Board.from_string("0000000000000000", size=4)
@@ -199,4 +217,5 @@ class TestFullDerivation:
             assert elim.cell == Cell(2, 3)
             assert len(elim.premises) == 1
             axiom = elim.premises[0]
+            assert isinstance(axiom, Axiom)
             assert axiom.value == elim.value

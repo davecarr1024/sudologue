@@ -1,7 +1,7 @@
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
 from sudologue.proof.engine import derive
-from sudologue.proof.proposition import Lemma
+from sudologue.proof.proposition import Axiom, Lemma
 from sudologue.proof.rules.naked_single import NakedSingle
 
 
@@ -81,6 +81,7 @@ class TestNakedSingle:
         for elim in lemma.premises:
             assert len(elim.premises) == 1
             axiom = elim.premises[0]
+            assert isinstance(axiom, Axiom)
             assert axiom.value == elim.value
 
     def test_name_property(self) -> None:

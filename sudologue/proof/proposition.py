@@ -22,7 +22,7 @@ class Elimination:
     cell: Cell
     value: int
     house: House
-    premises: tuple[Axiom, ...]
+    premises: tuple["EliminationPremise", ...]
 
     def __str__(self) -> str:
         return f"{self.cell} ≠ {self.value}"
@@ -84,4 +84,5 @@ class Theorem:
 
 
 Premise = Lemma | RangeLemma
+EliminationPremise = Axiom | Lemma | RangeLemma | Candidate
 Proposition = Axiom | Elimination | RangeLemma | Lemma | Candidate | Theorem

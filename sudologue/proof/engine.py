@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
-from sudologue.model.house import all_houses
+from sudologue.model.house import House, all_houses
 from sudologue.proof.proposition import Axiom, Candidate, Elimination, Lemma, RangeLemma
 
 
@@ -23,8 +23,19 @@ def derive(board: Board) -> Derivation:
     axioms = _extract_axioms(board)
     axiom_by_cell: dict[Cell, Axiom] = {ax.cell: ax for ax in axioms}
     eliminations = _derive_eliminations(board, axiom_by_cell)
-    lemmas = _derive_lemmas(board, eliminations)
-    range_lemmas = _derive_ranges(board, eliminations)
+    lemmas: tuple[Lemma, ...] = ()
+    range_lemmas: tuple[RangeLemma, ...] = ()
+
+    while True:
+        lemmas = _derive_lemmas(board, eliminations)
+        range_lemmas = _derive_ranges(board, eliminations)
+        new_elims = _derive_pair_eliminations(
+            board.size, lemmas, range_lemmas, eliminations
+        )
+        if not new_elims:
+            break
+        eliminations = eliminations + new_elims
+
     candidates = _derive_candidates(lemmas)
     return Derivation(
         size=board.size,
@@ -118,6 +129,76 @@ def _derive_ranges(
             result.append(RangeLemma(house, value, tuple(cells), tuple(premises)))
 
     return tuple(result)
+
+
+def _derive_pair_eliminations(
+    size: int,
+    lemmas: tuple[Lemma, ...],
+    range_lemmas: tuple[RangeLemma, ...],
+    eliminations: tuple[Elimination, ...],
+) -> tuple[Elimination, ...]:
+    """Derive eliminations from naked/hidden pair patterns."""
+    existing_keys = {(elim.cell, elim.value) for elim in eliminations}
+    lemmas_by_cell = {lemma.cell: lemma for lemma in lemmas}
+    results: list[Elimination] = []
+
+    if size == 0:
+        return tuple(results)
+
+    # Naked pairs
+    for house in all_houses(size):
+        house_lemmas = [
+            lemmas_by_cell[cell] for cell in house.cells if cell in lemmas_by_cell
+        ]
+        pairs: dict[frozenset[int], list[Lemma]] = {}
+        for lemma in house_lemmas:
+            if len(lemma.domain) == 2:
+                pairs.setdefault(lemma.domain, []).append(lemma)
+
+        for values, pair_lemmas in pairs.items():
+            if len(pair_lemmas) != 2:
+                continue
+            for lemma in house_lemmas:
+                if lemma in pair_lemmas:
+                    continue
+                for value in values:
+                    key = (lemma.cell, value)
+                    if key in existing_keys:
+                        continue
+                    existing_keys.add(key)
+                    results.append(
+                        Elimination(lemma.cell, value, house, tuple(pair_lemmas))
+                    )
+
+    # Hidden pairs
+    range_by_house: dict[House, list[RangeLemma]] = {}
+    for range_lemma in range_lemmas:
+        if len(range_lemma.cells) == 2:
+            range_by_house.setdefault(range_lemma.house, []).append(range_lemma)
+
+    for house, house_ranges in range_by_house.items():
+        by_cells: dict[tuple[Cell, ...], list[RangeLemma]] = {}
+        for range_lemma in house_ranges:
+            by_cells.setdefault(range_lemma.cells, []).append(range_lemma)
+
+        for cells, ranges in by_cells.items():
+            if len(ranges) != 2:
+                continue
+            pair_values = {ranges[0].value, ranges[1].value}
+            for cell in cells:
+                lemma = lemmas_by_cell.get(cell)
+                if lemma is None:
+                    continue
+                for value in lemma.domain:
+                    if value in pair_values:
+                        continue
+                    key = (cell, value)
+                    if key in existing_keys:
+                        continue
+                    existing_keys.add(key)
+                    results.append(Elimination(cell, value, house, tuple(ranges)))
+
+    return tuple(results)
 
 
 def _derive_candidates(lemmas: tuple[Lemma, ...]) -> tuple[Candidate, ...]:

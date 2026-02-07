@@ -27,4 +27,3 @@ class TestNineByNineSingles:
         assert result.final_board.is_complete
         rules = {step.theorem.rule for step in result.steps}
         assert "naked single" in rules
-        assert "hidden single" in rules

@@ -8,6 +8,7 @@ from sudologue.model.board import Board
 from sudologue.narration.policy import Verbosity
 from sudologue.proof.identity import prop_id
 from sudologue.proof.minimizer import slice_proof
+from sudologue.proof.proposition import Axiom
 from sudologue.proof.rules.hidden_single import HiddenSingle
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solve_result import SolveResult, SolveStatus
@@ -58,11 +59,17 @@ def format_proof(result: SolveResult, verbosity: Verbosity = Verbosity.FULL) -> 
             for elim in premise.premises:
                 if prop_id(elim) not in slice_ids:
                     continue
-                axiom = elim.premises[0]
-                if prop_id(axiom) in slice_ids:
-                    lines.append(f"    {elim} because {axiom} in {elim.house}")
-                else:
+                reasons = [
+                    str(reason)
+                    for reason in elim.premises
+                    if prop_id(reason) in slice_ids
+                ]
+                if not reasons:
                     lines.append(f"    {elim}")
+                elif len(reasons) == 1 and isinstance(elim.premises[0], Axiom):
+                    lines.append(f"    {elim} because {reasons[0]} in {elim.house}")
+                else:
+                    lines.append(f"    {elim} because " + "; ".join(reasons))
         lines.append("")
 
     if result.status == SolveStatus.SOLVED:
