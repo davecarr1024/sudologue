@@ -2,7 +2,7 @@ import pytest
 
 from sudologue.model.cell import Cell
 from sudologue.model.house import House, HouseType, all_houses
-from sudologue.proof.proposition import Axiom, Elimination, Lemma, Theorem
+from sudologue.proof.proposition import Axiom, Elimination, Lemma, NotCandidate, Theorem
 
 
 def _row0_4x4() -> House:
@@ -61,6 +61,14 @@ class TestElimination:
         elim = Elimination(Cell(2, 3), 1, _col3_4x4(), (ax,))
         with pytest.raises(AttributeError):
             elim.value = 2  # type: ignore[misc]
+
+
+class TestNotCandidate:
+    def test_alias(self) -> None:
+        ax = Axiom(Cell(0, 3), 1)
+        nc = NotCandidate(Cell(2, 3), 1, _col3_4x4(), (ax,))
+        assert isinstance(nc, Elimination)
+        assert str(nc) == "(2,3) ≠ 1"
 
 
 class TestLemma:

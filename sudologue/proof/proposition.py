@@ -28,6 +28,9 @@ class Elimination:
         return f"{self.cell} ≠ {self.value}"
 
 
+NotCandidate = Elimination
+
+
 @dataclass(frozen=True)
 class Lemma:
     """Remaining possible values for a cell after all eliminations."""
