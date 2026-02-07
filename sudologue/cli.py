@@ -2,17 +2,94 @@
 
 import argparse
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 from sudologue.model.board import Board
+from sudologue.model.house import HouseType
 from sudologue.narration.policy import Verbosity
 from sudologue.proof.identity import prop_id
 from sudologue.proof.minimizer import slice_proof
-from sudologue.proof.proposition import Axiom
+from sudologue.proof.proposition import (
+    Axiom,
+    Elimination,
+    EliminationPremise,
+    Lemma,
+    RangeLemma,
+)
 from sudologue.proof.rules.hidden_single import HiddenSingle
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solve_result import SolveResult, SolveStatus
 from sudologue.solver.solver import Solver
+
+
+def _format_cells(cells: tuple[object, ...]) -> str:
+    return ", ".join(str(cell) for cell in cells)
+
+
+def _format_elimination_reason(
+    elim: Elimination, reasons: Sequence[EliminationPremise]
+) -> str | None:
+    if not reasons:
+        return None
+
+    if len(reasons) == 1 and isinstance(reasons[0], Axiom):
+        return f"because {reasons[0]} in {elim.house}"
+
+    if all(isinstance(reason, RangeLemma) for reason in reasons):
+        range_reasons = [reason for reason in reasons if isinstance(reason, RangeLemma)]
+        houses = {reason.house for reason in range_reasons}
+        cells_sets = {reason.cells for reason in range_reasons}
+        values = sorted({reason.value for reason in range_reasons})
+
+        if len(range_reasons) == 1:
+            reason = range_reasons[0]
+            cells = _format_cells(reason.cells)
+            if reason.house != elim.house:
+                if (
+                    reason.house.house_type == HouseType.BOX
+                    and elim.house.house_type in {HouseType.ROW, HouseType.COLUMN}
+                ):
+                    return (
+                        f"because in {reason.house}, {reason.value} is confined to "
+                        f"{{{cells}}} in {elim.house}, so eliminate {reason.value} "
+                        f"from the rest of {elim.house} outside {reason.house}"
+                    )
+                if (
+                    reason.house.house_type in {HouseType.ROW, HouseType.COLUMN}
+                    and elim.house.house_type == HouseType.BOX
+                ):
+                    return (
+                        f"because in {reason.house}, {reason.value} is confined to "
+                        f"{{{cells}}} in {elim.house}, so eliminate {reason.value} "
+                        f"from the rest of {elim.house} outside {reason.house}"
+                    )
+            if elim.cell not in reason.cells:
+                return f"because {reason} excludes {elim.cell}"
+
+        if len(houses) == 1 and len(cells_sets) == 1:
+            house = next(iter(houses))
+            cells = _format_cells(next(iter(cells_sets)))
+            values_text = ", ".join(str(value) for value in values)
+            return (
+                f"because in {house}, only {{{values_text}}} fit in "
+                f"{{{cells}}}, so other digits are eliminated from those cells"
+            )
+
+    if all(isinstance(reason, Lemma) for reason in reasons):
+        lemma_reasons = [reason for reason in reasons if isinstance(reason, Lemma)]
+        domains = {reason.domain for reason in lemma_reasons}
+        if len(domains) == 1:
+            domain = next(iter(domains))
+            if len(domain) == 2:
+                values_text = ", ".join(str(value) for value in sorted(domain))
+                cells = _format_cells(tuple(reason.cell for reason in lemma_reasons))
+                return (
+                    f"because in {elim.house}, {{{cells}}} have domain "
+                    f"{{{values_text}}}, so eliminate those digits from other cells"
+                )
+
+    return "because " + "; ".join(str(reason) for reason in reasons)
 
 
 def format_board(board: Board) -> str:
@@ -60,16 +137,13 @@ def format_proof(result: SolveResult, verbosity: Verbosity = Verbosity.FULL) -> 
                 if prop_id(elim) not in slice_ids:
                     continue
                 reasons = [
-                    str(reason)
-                    for reason in elim.premises
-                    if prop_id(reason) in slice_ids
+                    reason for reason in elim.premises if prop_id(reason) in slice_ids
                 ]
-                if not reasons:
+                reason_text = _format_elimination_reason(elim, reasons)
+                if reason_text is None:
                     lines.append(f"    {elim}")
-                elif len(reasons) == 1 and isinstance(elim.premises[0], Axiom):
-                    lines.append(f"    {elim} because {reasons[0]} in {elim.house}")
                 else:
-                    lines.append(f"    {elim} because " + "; ".join(reasons))
+                    lines.append(f"    {elim} {reason_text}")
         lines.append("")
 
     if result.status == SolveStatus.SOLVED:
