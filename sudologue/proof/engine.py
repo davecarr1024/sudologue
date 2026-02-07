@@ -10,6 +10,7 @@ from sudologue.proof.proposition import Axiom, Elimination, Lemma
 class Derivation:
     """All propositions derived from a board state in a single pass."""
 
+    size: int
     axioms: tuple[Axiom, ...]
     eliminations: tuple[Elimination, ...]
     lemmas: tuple[Lemma, ...]
@@ -22,6 +23,7 @@ def derive(board: Board) -> Derivation:
     eliminations = _derive_eliminations(board, axiom_by_cell)
     lemmas = _derive_lemmas(board, eliminations)
     return Derivation(
+        size=board.size,
         axioms=axioms,
         eliminations=eliminations,
         lemmas=lemmas,

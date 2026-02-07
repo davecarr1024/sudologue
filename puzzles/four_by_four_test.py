@@ -3,6 +3,7 @@
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
 from sudologue.proof.proposition import Axiom, Elimination, Lemma
+from sudologue.proof.rules.hidden_single import HiddenSingle
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solve_result import SolveStatus
 from sudologue.solver.solver import Solver
@@ -261,3 +262,20 @@ class TestStuckBoard:
         # Either way, final_board should have at least the original clues
         assert result.final_board.value_at(Cell(0, 0)) == 1
         assert result.final_board.value_at(Cell(0, 1)) == 2
+
+
+class TestHiddenSingleSolve:
+    """Boards that require a hidden single to make progress."""
+
+    def test_naked_single_stuck(self) -> None:
+        # This board has a hidden single but no naked singles.
+        board = Board.from_string("1200001221000000", size=4)
+        result = _solver().solve(board)
+        assert result.status == SolveStatus.STUCK
+
+    def test_hidden_single_progresses(self) -> None:
+        board = Board.from_string("1200001221000000", size=4)
+        solver = Solver([NakedSingle(), HiddenSingle()])
+        result = solver.solve(board)
+        assert len(result.steps) > 0
+        assert result.steps[0].theorem.rule == "hidden single"

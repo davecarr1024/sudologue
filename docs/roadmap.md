@@ -55,11 +55,16 @@ Each step is built bottom-up: fully tested before the next layer starts. Every s
 - [x] Print proof chain and solution
 - [x] `--size` flag for board size (default 9)
 
+### Step 10: Hidden Single `proof/rules/hidden_single.py`
+- [x] `HiddenSingle.apply(derivation) -> Sequence[Theorem]`
+- [x] Tests: hidden single detection in a house, no false positives
+- [x] End-to-end puzzle requiring hidden single
+
 ## Future Work
 
-- Hidden single rule
-- 9x9 puzzle solves
+- Candidate elimination propositions (premises from lemmas)
 - Naked pair / hidden pair
+- 9x9 puzzle solves
 - Pointing pairs / box-line reduction
 - X-Wing, Swordfish
 - Multiple narration styles

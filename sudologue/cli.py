@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from sudologue.model.board import Board
+from sudologue.proof.rules.hidden_single import HiddenSingle
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solve_result import SolveResult, SolveStatus
 from sudologue.solver.solver import Solver
@@ -115,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
-    solver = Solver([NakedSingle()])
+    solver = Solver([NakedSingle(), HiddenSingle()])
     result = solver.solve(board)
 
     print(format_proof(result))

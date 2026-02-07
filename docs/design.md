@@ -170,6 +170,14 @@ Because every theorem carries its full proof chain, narration is just proof rend
 
 **Composability.** Complex reasoning emerges from combining simple propositions. A naked single proof is: axioms -> eliminations -> domain lemma -> theorem. A hidden single proof combines domain lemmas across a house. Future rules (naked pairs, X-Wings) compose the same building blocks in new ways.
 
+## Complex Constructions (Atomic + Composable)
+
+More advanced logic still follows the same atomic style: build small propositions, then compose them into a theorem.
+
+**Hidden single proof shape.** A hidden single uses only existing lemmas. The rule gathers the domain lemmas for a house and proves that a value occurs in exactly one domain. The theorem cites all house lemmas as premises, preserving a full proof chain without introducing new proposition types.
+
+**Set-based reasoning (future).** Patterns like naked/hidden pairs, pointing pairs, and X-Wing will introduce *candidate eliminations* that are not directly tied to a single axiom. These will be represented as first-class propositions whose premises are domain lemmas (and, transitively, eliminations and axioms). This keeps the logic atomic: each elimination is still a discrete proposition, but its justification is a composable chain of smaller propositions rather than a monolithic rule.
+
 **Independence.** Each reasoning step takes the board as its sole input and produces a new board plus a proof. There is no mutable state carried between steps. After every placement, the solver starts fresh — re-deriving axioms, eliminations, and lemmas from the new board.
 
 **One step at a time.** The solver applies exactly one theorem per iteration, then re-evaluates. This produces a trace that reads like a human working through the puzzle — each step is a single thought, not a batch dump.
