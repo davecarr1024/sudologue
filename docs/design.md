@@ -14,13 +14,13 @@ Propositions are immutable facts with explicit premises. Together they form a pr
 Axiom: cell (0,3) = 1    [observed from board]
 ```
 
-**Elimination** — A derived fact that a cell cannot contain a value.
+**Elimination (NotCandidate)** — A derived fact that a cell cannot contain a value, justified by premises (often axioms; future rules may justify eliminations via lemmas or ranges).
 
 ```
 Elimination: (2,3) ≠ 1    [from: (0,3) = 1; shared house: column 3]
 ```
 
-**Lemma (Domain)** — Remaining possible values for a cell after eliminations.
+**Lemma (Domain)** — Remaining possible values for a cell, computed as base domain minus eliminations.
 
 ```
 Lemma: domain of (2,3) = {4}    [from: (2,3) ≠ 1, (2,3) ≠ 2, (2,3) ≠ 3]
@@ -36,7 +36,7 @@ Every proposition is a frozen dataclass that holds its conclusion and premise re
 
 ## Derived Views (Candidates, Domains, Ranges)
 
-Candidates are a **derived view**: a value is a candidate if it has not been eliminated in the current derivation.
+Candidates are a **derived view**: a value is a candidate if it has not been eliminated in the current derivation. Candidates are defined over the base domain `v ∈ {1..N}`.
 
 ```
 Candidate(cell, v)  <=>  no elimination (cell ≠ v) exists in the derivation
@@ -94,7 +94,7 @@ Further rules are added incrementally as tests demand them.
 ```
 Theorem(place v at cell)
   <- Lemma(domain(cell) = {v})
-      <- Eliminations(cell ≠ v_i) for all other values
+      <- Eliminations(cell ≠ v_i) for excluded values
           <- Axioms that justify those eliminations
 ```
 
@@ -108,8 +108,8 @@ flowchart TD
 **Hidden single (range-first, minimal premises)**
 
 ```
-Theorem(place v at target)
-  <- Eliminations(other_cell ≠ v) for all other cells in house
+Theorem(place v at target)  [hidden single in house H]
+  <- Eliminations(other_cell ≠ v) for all other cells in H
      <- Axioms (via house relationships)
 ```
 
@@ -157,7 +157,7 @@ Boards validate invariants on construction: no duplicate values in any house and
 
 1. **RangeLemma** — optional first-class proposition: `RangeLemma(house, value, cells, premises)` derived from candidate facts.
 2. **Candidate promotion** — if needed for narration or advanced rules, introduce a computed or explicit `Candidate` node without breaking the interface layer.
-3. **Proof minimization** — keep derivation maximal; slice explanations lazily at narration time. Optional eager scoring can be used to choose among competing theorems.
+3. **Proof minimization** — keep derivation maximal; slice explanations lazily at narration time. Minimization is backward slicing of the proof DAG from a theorem, optionally dropping redundant premises per narration policy. Optional eager scoring can be used to choose among competing theorems.
 4. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
 
 ## Testing Strategy
@@ -212,7 +212,7 @@ puzzles/
 
 ## Tooling
 
-- **Python 3.14** — Latest language features
+- **Python 3.12+** — Modern language features without pinning to pre-release runtimes
 - **Poetry** — Dependency management
 - **pyproject.toml** — Single-file project configuration
 - **pytest** — Test framework with coverage via `pytest-cov`
