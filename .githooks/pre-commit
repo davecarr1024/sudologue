@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Running poe all (format, lint, typecheck, test)..."
+poetry run poe all
+
+# Stage any formatting changes
+git diff --name-only | while read -r file; do
+    if git ls-files --error-unmatch "$file" > /dev/null 2>&1; then
+        git add "$file"
+    fi
+done
