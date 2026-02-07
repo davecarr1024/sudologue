@@ -120,9 +120,9 @@ class TestSolverProofInspection:
         for step in result.steps:
             thm = step.theorem
             assert len(thm.premises) > 0
-            lemma = thm.premises[0]
-            assert isinstance(lemma, Lemma)
-            assert thm.value in lemma.domain or len(lemma.domain) == 1
+            range_lemma = thm.premises[0]
+            assert isinstance(range_lemma, RangeLemma)
+            assert range_lemma.cells == () or range_lemma.cells == (thm.cell,)
 
 
 class TestSolverScoring:

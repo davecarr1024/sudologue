@@ -1,5 +1,5 @@
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 from sudologue.model.cell import Cell
@@ -9,6 +9,7 @@ class HouseType(Enum):
     ROW = "row"
     COLUMN = "column"
     BOX = "box"
+    CELL = "cell"
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,27 @@ class House:
 
     def __str__(self) -> str:
         return f"{self.house_type.value} {self.index}"
+
+
+@dataclass(frozen=True)
+class CellHouse:
+    """A pseudo-house that groups the candidate values of a single cell."""
+
+    cell: Cell
+    size: int
+    house_type: HouseType = field(default=HouseType.CELL, init=False)
+    index: int = field(init=False)
+    cells: tuple[Cell, ...] = field(init=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "index", self.cell.row * self.size + self.cell.col)
+        object.__setattr__(self, "cells", (self.cell,))
+
+    def __str__(self) -> str:
+        return f"cell {self.cell}"
+
+
+HouseLike = House | CellHouse
 
 
 def _box_size(size: int) -> int:

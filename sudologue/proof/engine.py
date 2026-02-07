@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
-from sudologue.model.house import HouseType, all_houses
+from sudologue.model.house import CellHouse, HouseType, all_houses
 from sudologue.proof.proposition import Axiom, Candidate, Elimination, Lemma, RangeLemma
 
 
@@ -132,6 +132,15 @@ def _derive_ranges(
                     premises.append(elim)
             result.append(RangeLemma(house, value, tuple(cells), tuple(premises)))
 
+    for cell in board.empty_cells:
+        cell_house = CellHouse(cell, board.size)
+        for value in range(1, board.size + 1):
+            elim = elim_by_cell_value.get((cell, value))
+            if elim is None:
+                result.append(RangeLemma(cell_house, value, (cell,), ()))
+            else:
+                result.append(RangeLemma(cell_house, value, (), (elim,)))
+
     return tuple(result)
 
 
@@ -142,39 +151,7 @@ def _derive_pair_eliminations(
     eliminations: tuple[Elimination, ...],
 ) -> tuple[Elimination, ...]:
     """Derive eliminations from naked/hidden pair patterns."""
-    existing_keys = {(elim.cell, elim.value) for elim in eliminations}
-    lemmas_by_cell = {lemma.cell: lemma for lemma in lemmas}
-    results: list[Elimination] = []
-
-    if size == 0:
-        return tuple(results)
-
-    # Naked pairs
-    for house in all_houses(size):
-        house_lemmas = [
-            lemmas_by_cell[cell] for cell in house.cells if cell in lemmas_by_cell
-        ]
-        pairs: dict[frozenset[int], list[Lemma]] = {}
-        for lemma in house_lemmas:
-            if len(lemma.domain) == 2:
-                pairs.setdefault(lemma.domain, []).append(lemma)
-
-        for values, pair_lemmas in pairs.items():
-            if len(pair_lemmas) != 2:
-                continue
-            for lemma in house_lemmas:
-                if lemma in pair_lemmas:
-                    continue
-                for value in values:
-                    key = (lemma.cell, value)
-                    if key in existing_keys:
-                        continue
-                    existing_keys.add(key)
-                    results.append(
-                        Elimination(lemma.cell, value, house, tuple(pair_lemmas))
-                    )
-
-    return tuple(results)
+    return ()
 
 
 def _derive_pointing_eliminations(

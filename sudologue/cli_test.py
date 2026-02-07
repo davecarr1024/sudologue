@@ -65,8 +65,8 @@ class TestFormatProof:
         board = Board.from_string("1230341221434321", size=4)
         result = Solver([NakedSingle()]).solve(board)
         text = format_proof(result)
-        # Should contain domain and elimination details
-        assert "domain" in text
+        # Should contain range and elimination details
+        assert "range" in text
         assert "because" in text
 
     def test_terse_output(self) -> None:

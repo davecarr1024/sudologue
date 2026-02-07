@@ -2,6 +2,7 @@
 
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
+from sudologue.model.house import HouseType
 from sudologue.proof.proposition import Axiom, Elimination, Lemma, RangeLemma
 from sudologue.proof.rules.hidden_single import HiddenSingle
 from sudologue.proof.rules.naked_single import NakedSingle
@@ -143,71 +144,76 @@ class TestFullSolveFromSparseBoard:
 class TestProofChainIntegrity:
     """Verify that every proof chain in the solve trace is valid."""
 
-    def test_every_theorem_has_lemma_premise(self) -> None:
+    def test_every_theorem_has_range_premise(self) -> None:
         board = Board.from_string("1230000400010003", size=4)
         result = _solver().solve(board)
         for step in result.steps:
             thm = step.theorem
-            assert len(thm.premises) == 1
-            lemma = thm.premises[0]
-            assert isinstance(lemma, Lemma)
-            assert lemma.cell == thm.cell
-            assert lemma.domain == frozenset({thm.value})
+            assert len(thm.premises) > 0
+            range_premises = [
+                prem for prem in thm.premises if isinstance(prem, RangeLemma)
+            ]
+            assert len(range_premises) == len(thm.premises)
+            assert all(
+                prem.house.house_type == HouseType.CELL and prem.cells == ()
+                for prem in range_premises
+            )
+            assert thm.value not in {prem.value for prem in range_premises}
 
-    def test_lemma_premises_are_eliminations(self) -> None:
+    def test_range_premises_are_eliminations(self) -> None:
         board = Board.from_string("1230000400010003", size=4)
         result = _solver().solve(board)
         for step in result.steps:
-            lemma = step.theorem.premises[0]
-            assert isinstance(lemma, Lemma)
-            for elim in lemma.premises:
-                assert isinstance(elim, Elimination)
-                assert elim.cell == lemma.cell
+            range_premises = [
+                prem for prem in step.theorem.premises if isinstance(prem, RangeLemma)
+            ]
+            for range_lemma in range_premises:
+                for elim in range_lemma.premises:
+                    assert isinstance(elim, Elimination)
+                    assert elim.cell == step.theorem.cell
 
     def test_elimination_premises_are_axioms(self) -> None:
         board = Board.from_string("1230000400010003", size=4)
         result = _solver().solve(board)
         for step in result.steps:
-            lemma = step.theorem.premises[0]
-            assert isinstance(lemma, Lemma)
-            for elim in lemma.premises:
-                for axiom in elim.premises:
-                    assert isinstance(axiom, (Axiom, Lemma, RangeLemma))
-                    if isinstance(axiom, Axiom):
-                        assert axiom.value == elim.value
+            range_premises = [
+                prem for prem in step.theorem.premises if isinstance(prem, RangeLemma)
+            ]
+            for range_lemma in range_premises:
+                for elim in range_lemma.premises:
+                    for axiom in elim.premises:
+                        assert isinstance(axiom, (Axiom, Lemma, RangeLemma))
+                        if isinstance(axiom, Axiom):
+                            assert axiom.value == elim.value
 
     def test_proof_chain_traversable_to_axioms(self) -> None:
-        """Full traversal: theorem -> lemma -> eliminations -> axioms."""
+        """Full traversal: theorem -> range lemmas -> eliminations -> axioms."""
         board = Board.from_string("1230000400010003", size=4)
         result = _solver().solve(board)
         first = result.steps[0]
         thm = first.theorem
 
-        # Theorem -> Lemma
-        lemma = thm.premises[0]
-        assert isinstance(lemma, Lemma)
-        assert lemma.cell == thm.cell
-
-        # Lemma -> Eliminations -> Axioms
-        for elim in lemma.premises:
-            assert len(elim.premises) >= 1
-            axiom = elim.premises[0]
-            assert isinstance(axiom, Axiom)
-            assert axiom.value == elim.value
+        # Theorem -> Range Lemmas -> Eliminations -> Axioms
+        range_premises = [prem for prem in thm.premises if isinstance(prem, RangeLemma)]
+        for range_lemma in range_premises:
+            for elim in range_lemma.premises:
+                assert len(elim.premises) >= 1
+                axiom = elim.premises[0]
+                assert isinstance(axiom, Axiom)
+                assert axiom.value == elim.value
 
     def test_eliminated_values_complement_domain(self) -> None:
-        """The eliminated values + domain values = full value set."""
+        """Eliminated values should not include the placed value."""
         board = Board.from_string("1230000400010003", size=4)
         result = _solver().solve(board)
         for step in result.steps:
-            lemma = step.theorem.premises[0]
-            assert isinstance(lemma, Lemma)
-            eliminated = {e.value for e in lemma.premises}
-            domain = lemma.domain
-            # Eliminated + domain should cover some subset of 1..4
-            # (not necessarily all, since some values may not be
-            # in the cell's houses)
-            assert len(eliminated & domain) == 0
+            eliminated: set[int] = set()
+            range_premises = [
+                prem for prem in step.theorem.premises if isinstance(prem, RangeLemma)
+            ]
+            for range_lemma in range_premises:
+                eliminated.add(range_lemma.value)
+            assert step.theorem.value not in eliminated
 
 
 class TestBoardIntegrity:

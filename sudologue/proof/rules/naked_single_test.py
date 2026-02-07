@@ -1,7 +1,8 @@
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
+from sudologue.model.house import HouseType
 from sudologue.proof.engine import derive
-from sudologue.proof.proposition import Axiom, Lemma
+from sudologue.proof.proposition import Axiom, RangeLemma
 from sudologue.proof.rules.naked_single import NakedSingle
 
 
@@ -29,16 +30,18 @@ class TestNakedSingle:
         thm = next(t for t in theorems if t.cell == Cell(2, 3))
         assert thm.rule == "naked single"
 
-    def test_theorem_premise_is_lemma(self) -> None:
+    def test_theorem_premise_is_range_lemmas(self) -> None:
         board = Board.from_string("0001000230000000", size=4)
         derivation = derive(board)
         theorems = NakedSingle().apply(derivation)
         thm = next(t for t in theorems if t.cell == Cell(2, 3))
-        assert len(thm.premises) == 1
-        lemma = thm.premises[0]
-        assert isinstance(lemma, Lemma)
-        assert lemma.cell == Cell(2, 3)
-        assert lemma.domain == frozenset({4})
+        premise_values = {p.value for p in thm.premises if isinstance(p, RangeLemma)}
+        assert premise_values == {1, 2, 3}
+        assert all(
+            isinstance(p, RangeLemma) and p.house.house_type == HouseType.CELL
+            for p in thm.premises
+        )
+        assert all(p.cells == () for p in thm.premises if isinstance(p, RangeLemma))
 
     def test_no_theorems_when_no_singletons(self) -> None:
         # Empty board: all domains are {1,2,3,4}, no singletons
@@ -70,15 +73,13 @@ class TestNakedSingle:
         theorems = NakedSingle().apply(derivation)
         thm = next(t for t in theorems if t.cell == Cell(2, 3))
 
-        # theorem -> lemma -> eliminations -> axioms
-        lemma = thm.premises[0]
-        assert isinstance(lemma, Lemma)
-        assert lemma.cell == Cell(2, 3)
-
-        eliminated_values = {e.value for e in lemma.premises}
-        assert eliminated_values == {1, 2, 3}
-
-        for elim in lemma.premises:
+        # theorem -> range lemmas -> eliminations -> axioms
+        for range_lemma in thm.premises:
+            assert isinstance(range_lemma, RangeLemma)
+            assert range_lemma.house.house_type == HouseType.CELL
+            assert range_lemma.cells == ()
+            assert len(range_lemma.premises) == 1
+            elim = range_lemma.premises[0]
             assert len(elim.premises) == 1
             axiom = elim.premises[0]
             assert isinstance(axiom, Axiom)

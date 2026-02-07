@@ -45,7 +45,6 @@ Goal: make explanations minimal, policy-driven, and stable.
 
 Goal: progress beyond singles while preserving proof structure.
 
-- [x] Naked pair (domain based)
 - [x] Pointing pairs / box-line reduction (range-first)
 - [ ] Add 9x9 puzzles that require these rules
 - [x] Tests: rule-specific derivations

@@ -22,13 +22,13 @@ Axiom: cell (0,3) = 1    [observed from board]
 Elimination: (2,3) ≠ 1    [from: (0,3) = 1; shared house: column 3]
 ```
 
-**Lemma (Domain)** — Remaining possible values for a cell, computed as base domain minus eliminations.
+**Lemma (Domain)** — Remaining possible values for a cell, computed as base domain minus eliminations. This is a derived view used for debugging and legacy narration; rule logic does not depend on Lemma.
 
 ```
 Lemma: domain of (2,3) = {4}    [from: (2,3) ≠ 1, (2,3) ≠ 2, (2,3) ≠ 3]
 ```
 
-**RangeLemma (Range)** — Remaining possible cells for a value in a house after eliminations.
+**RangeLemma (Range)** — Remaining possible cells for a value in a house after eliminations. This is the **first-class** proposition used by all higher-level rules.
 
 ```
 RangeLemma: range of row 3 for 1 = {(3,3)}    [from: (3,0) ≠ 1, (3,1) ≠ 1, (3,2) ≠ 1]
@@ -40,7 +40,7 @@ RangeLemma: range of row 3 for 1 = {(3,3)}    [from: (3,0) ≠ 1, (3,1) ≠ 1, (
 Candidate: (2,3) = 4    [from: domain of (2,3) = {4}]
 ```
 
-**Theorem** — A proven placement selected from already-justified eliminations.
+**Theorem** — A proven placement selected from already-justified range evidence.
 
 ```
 Theorem: place 4 at (2,3)    [from: domain of (2,3) = {4}; by naked single]
@@ -63,7 +63,7 @@ Domain: domain(cell) = {v | Candidate(cell, v)}
 Range:  range(house, v) = {cell in house | Candidate(cell, v)}
 ```
 
-These views are computed, and Range is also materialized as a `RangeLemma` proposition for proof narration. This keeps proofs clean while allowing a future promotion to explicit `Candidate` nodes if needed.
+These views are computed, and Range is materialized as a `RangeLemma` proposition for proof narration. Cell domains are represented as **cell-house ranges**: for each cell and value, `RangeLemma(cell-house, v)` either contains the cell (candidate) or is empty (eliminated). All higher-level rules consume RangeLemmas only.
 
 **Derived-View Interfaces (stable API)**
 
@@ -80,8 +80,8 @@ Proofs are DAGs, not trees. Shared subproofs are never duplicated.
 ```mermaid
 flowchart TD
   A[Axiom] --> E[Elimination]
-  E --> L[Domain Lemma]
-  L --> T[Theorem]
+  E --> R[Range Lemma]
+  R --> T[Theorem]
 ```
 
 Each theorem is immutable and tied to the board state at the step it was proven. After a placement, the solver re-derives all propositions from the new board.
@@ -93,33 +93,32 @@ Each theorem is immutable and tied to the board state at the step it was proven.
 1. **Axiom extraction** — create axioms for all placed values.
 2. **Elimination** — for each axiom, eliminate that value from peer cells.
 3. **Domain reduction** — for each empty cell, compute its domain lemma.
-4. **Range reduction** — for each `(house, value)`, compute its range lemma.
-5. **Pair eliminations** — apply naked pairs to derive additional eliminations; repeat until no new eliminations are found.
-6. **Box-line reduction** — apply pointing/claiming eliminations from range confinement.
+4. **Range reduction** — for each `(house, value)`, compute its range lemma (including cell-houses).
+5. **Box-line reduction** — apply pointing/claiming eliminations from range confinement.
 
-**Selection rules** (priority order):
+**Selection rules** (priority order, range-only):
 
-1. **Naked single** — if `domain(cell)` has size 1, place it.
+1. **Naked single** — for a cell-house, if exactly one value yields a non-empty range, place it. Premises are the cell-house ranges for all other values (empty ranges).
 2. **Hidden single** — for each `(house, value)`, compute `range(house, value)`; if it has size 1, place it. Premises should be **targeted eliminations** proving `¬Candidate` for every other cell in the house. `Candidate(target, value)` is implied (can be included in full/strict proofs later).
 
 Further rules are added incrementally as tests demand them.
 
 ## Proof Shapes (Rule-Level)
 
-**Naked single (domain-first)**
+**Naked single (range-first, cell-house)**
 
 ```
 Theorem(place v at cell)
-  <- Lemma(domain(cell) = {v})
-      <- Eliminations(cell ≠ v_i) for the values ruled out in this step (base domain minus these eliminations yields {v})
+  <- RangeLemma(range(cell-house, v_i) = ∅) for each excluded value v_i
+      <- Eliminations(cell ≠ v_i)
           <- Axioms that justify those eliminations
 ```
 
 ```mermaid
 flowchart TD
   A1[Axioms] --> E1[Eliminations for cell]
-  E1 --> L1[Domain Lemma]
-  L1 --> T1[Theorem: place v at cell]
+  E1 --> R1[Cell-house Range Lemmas (excluded values)]
+  R1 --> T1[Theorem: place v at cell]
 ```
 
 **Hidden single (range-first, minimal premises)**
@@ -182,7 +181,7 @@ Boards validate invariants on construction: no duplicate values in any house and
 
 ## Future Extensions (Range-First + Minimization)
 
-1. **Advanced rules** — naked pairs (done), pointing/claiming (done), hidden pairs as explicit structure, X-Wing, Swordfish.
+1. **Advanced rules** — pointing/claiming (done), pairs as explicit structure, X-Wing, Swordfish.
 2. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
 
 ## Testing Strategy

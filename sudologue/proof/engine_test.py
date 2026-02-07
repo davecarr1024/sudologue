@@ -170,16 +170,6 @@ class TestDeriveCandidates:
         assert Candidate(Cell(2, 3), 4, (lemma,)) in d.candidates
 
 
-class TestDerivePairs:
-    def test_naked_pair_elimination(self) -> None:
-        board = Board.from_string("1000301220004301", size=4)
-        d = derive(board)
-        elim = next(e for e in d.eliminations if e.cell == Cell(0, 1) and e.value == 4)
-        assert all(isinstance(p, Lemma) for p in elim.premises)
-        premise_cells = {p.cell for p in elim.premises if isinstance(p, Lemma)}
-        assert premise_cells == {Cell(0, 2), Cell(0, 3)}
-
-
 class TestDerivePointing:
     def test_pointing_pair_elimination(self) -> None:
         box = next(

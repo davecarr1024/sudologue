@@ -1,5 +1,6 @@
 from typing import Sequence
 
+from sudologue.model.house import HouseType
 from sudologue.proof.engine import Derivation
 from sudologue.proof.proposition import Theorem
 
@@ -17,6 +18,8 @@ class HiddenSingle:
             return results
 
         for range_lemma in derivation.range_lemmas:
+            if range_lemma.house.house_type == HouseType.CELL:
+                continue
             if len(range_lemma.cells) == 1:
                 target = range_lemma.cells[0]
                 results.append(

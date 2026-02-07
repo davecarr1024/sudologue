@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from sudologue.model.cell import Cell
-from sudologue.model.house import House
+from sudologue.model.house import House, HouseLike
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ NotCandidate = Elimination
 class RangeLemma:
     """Possible cells in a house for a value after eliminations."""
 
-    house: House
+    house: HouseLike
     value: int
     cells: tuple[Cell, ...]
     premises: tuple[Elimination, ...]
