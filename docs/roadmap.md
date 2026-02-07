@@ -1,78 +1,59 @@
 # Roadmap
 
-## Implementation Plan
+## Completed
 
-Each step is built bottom-up: fully tested before the next layer starts. Every step gets its own commit.
+- Core model: cells, houses, board, validation, parsing
+- Proof propositions: axioms, eliminations, domain lemmas, theorems
+- Proof engine with derived views (candidates/domains/ranges)
+- Solver loop, CLI, and 4x4 + 9x9 puzzle coverage
+- Naked single and hidden single with range-first narration
 
-### Step 1: Cell `model/cell.py`
-- [x] Frozen dataclass `Cell(row, col)` with bounds validation
-- [x] Tests for construction, validation, equality, hashing
+## Remaining Work (Phased Plan)
 
-### Step 2: House `model/house.py`
-- [x] `HouseType` enum (ROW, COLUMN, BOX)
-- [x] Frozen dataclass `House(house_type, index, cells)`
-- [x] Parameterized by board size: `all_houses(size)` generates all houses
-- [x] Lookup functions: `houses_for(cell, size)`, `peers(cell, size)`
-- [x] Tests for 4x4 house generation, peer lookups, box boundaries
+Each phase is shippable with full tests and its own commit series.
 
-### Step 3: Board `model/board.py`
-- [x] Frozen dataclass `Board(size, cells)` — placed values only, no candidates
-- [x] `__post_init__` validates all sudoku invariants
-- [x] `from_string(s, size)` factory, `value_at(cell)`, `place(cell, value)`
-- [x] `is_complete` property
-- [x] Tests focused on 4x4: construction, validation errors, placement, string parsing
+### Phase 1: Proof Identity + Naming Clarity
 
-### Step 4: Propositions `proof/proposition.py`
-- [x] `Axiom(cell, value)` — no premises
-- [x] `Elimination(cell, value, house, premises)` — tuple of premises (axioms now; lemmas/ranges later)
-- [x] `Lemma(cell, domain, premises)` — tuple of Elimination premises
-- [x] `Theorem(cell, value, rule, premises)` — tuple of Lemma premises
-- [x] `Proposition` union type alias
-- [x] Tests: construction, immutability, premise traversal, DAG sharing
+Goal: make proof graph tooling-ready without changing solver behavior.
 
-### Step 5: Proof Engine `proof/engine.py`
-- [x] `Derivation` dataclass holding all axioms, eliminations, lemmas
-- [x] `derive(board) -> Derivation` — eagerly computes all propositions
-- [x] Tests: axiom extraction, elimination derivation, domain reduction, all on 4x4
- - [x] Derived views: candidate/domain/range computed from eliminations
+- Add stable proposition IDs: hashable by `(type, conclusion fields)`
+- Add proof index utilities for de-duplication/slicing
+- Optional rename path: `Elimination` -> `NotCandidate` (type alias + doc update)
+- Tests: ID stability, de-duplication across derivations, backward traversal
 
-### Step 6: Naked Single `proof/rules/naked_single.py`
-- [x] `Rule` protocol
-- [x] `NakedSingle.apply(derivation) -> Sequence[Theorem]`
-- [x] Tests: singleton domain produces theorem, multi-value domain does not
+### Phase 2: Range Lemmas + Candidate Promotion
 
-### Step 7: Solver `solver/`
-- [x] `SolveStatus` enum, `SolveResult` dataclass
-- [x] `Solver` with rule registration and solve loop
-- [x] Tests: single-step solve, multi-step solve, stuck detection
+Goal: expose range-first reasoning as first-class proof objects.
 
-### Step 8: 4x4 End-to-End `puzzles/`
-- [x] Full 4x4 board solves with proof chain verification
-- [x] Multiple puzzles of varying difficulty
+- Introduce `RangeLemma(house, value, cells, premises)`
+- Define premises for RangeLemma based on NotCandidate facts
+- Optional explicit `Candidate` nodes (derived or computed)
+- Update narrator to surface RangeLemma in hidden single explanations
+- Tests: range lemma derivation, premise coverage, hidden single proof chains
 
-### Step 9: CLI
-- [x] `sudologue` command via poetry script entry point
-- [x] Load puzzle from string argument or file
-- [x] Print proof chain and solution
-- [x] `--size` flag for board size (default 9)
+### Phase 3: Proof Minimization + Narration Policies
 
-### Step 10: Hidden Single `proof/rules/hidden_single.py`
-- [x] `HiddenSingle.apply(derivation) -> Sequence[Theorem]`
-- [x] Tests: hidden single detection in a house, no false positives
-- [x] End-to-end puzzle requiring hidden single
-- [x] Range-first narration and minimal premises (other cells in house)
+Goal: make explanations minimal, policy-driven, and stable.
 
-### Step 11: 9x9 End-to-End `puzzles/`
-- [x] 9x9 puzzle solve using naked + hidden singles
+- Implement backward slicing over the proof DAG (terse/normal/full)
+- Add narration policies (range-first vs domain-first; verbosity modes)
+- Add proof scoring hooks for choosing among theorems
+- Tests: slicing removes redundant premises without breaking validity
 
-## Future Work
+### Phase 4: Mid-Level Techniques
 
-- Optional rename: `Elimination` -> `NotCandidate` for clarity in advanced rules
-- RangeLemma proposition (house, value, cells) derived from candidates
-- Candidate promotion (explicit `Candidate` nodes for narration/debug)
-- Proof minimization (backward slicing with narration policies)
-- Stable proposition IDs for de-duplication and slicing
-- Narration styles (terse/normal/full, range-first variants)
-- Naked pair / hidden pair
-- Pointing pairs / box-line reduction
-- X-Wing, Swordfish
+Goal: progress beyond singles while preserving proof structure.
+
+- Naked pair / hidden pair (domain/range based)
+- Pointing pairs / box-line reduction (range-first)
+- Add 9x9 puzzles that require these rules
+- Tests: rule-specific derivations + end-to-end solves
+
+### Phase 5: Advanced Fish
+
+Goal: scalable pattern rules with clean proofs.
+
+- X-Wing (row/column range intersections)
+- Swordfish (generalized fish patterns)
+- Stress-test narration for complex premises
+- Tests: targeted 9x9 fixtures + proof chain integrity
