@@ -16,10 +16,10 @@ Each phase is shippable with full tests and its own commit series.
 
 Goal: make proof graph tooling-ready without changing solver behavior.
 
-- Add stable proposition IDs: hashable by `(type, conclusion fields)`
-- Add proof index utilities for de-duplication/slicing
-- Optional rename path: `Elimination` -> `NotCandidate` (type alias + doc update)
-- Tests: ID stability, de-duplication across derivations, backward traversal
+- [x] Add stable proposition IDs: hashable by `(type, conclusion fields)`
+- [x] Add proof index utilities for de-duplication/slicing
+- [ ] Optional rename path: `Elimination` -> `NotCandidate` (type alias + doc update)
+- [x] Tests: ID stability, de-duplication across derivations, backward traversal
 
 ### Phase 2: Range Lemmas + Candidate Promotion
 
