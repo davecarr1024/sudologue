@@ -3,10 +3,12 @@ import pytest
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
 from sudologue.model.house import HouseType, all_houses
-from sudologue.proof.proposition import Axiom, Elimination, Lemma, Theorem
+from sudologue.proof.identity import collect_proof
+from sudologue.proof.proposition import Axiom, Elimination, Lemma, RangeLemma, Theorem
+from sudologue.proof.rules.hidden_single import HiddenSingle
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.proof.scoring import proof_size
-from sudologue.solver.solve_result import SolveStatus
+from sudologue.solver.solve_result import SolveStatus, SolveStep
 from sudologue.solver.solver import Solver
 
 
@@ -153,3 +155,60 @@ class TestSolverScoring:
         solver = Solver([StubRule()], scorer=proof_size)
         result = solver.solve(board)
         assert result.steps[0].theorem is thm_short
+
+
+class TestSolverPointingClaiming:
+    def test_pointing_pair_used_in_solve(self) -> None:
+        board = Board.from_string("1234000021430320", size=4)
+        solver = Solver([HiddenSingle(), NakedSingle()])
+        result = solver.solve(board)
+        assert result.status == SolveStatus.SOLVED
+
+        def uses_pointing(step: SolveStep) -> bool:
+            theorem = step.theorem
+            for prop in collect_proof(theorem):
+                if isinstance(prop, Elimination):
+                    if prop.house.house_type in {HouseType.ROW, HouseType.COLUMN}:
+                        for premise in prop.premises:
+                            if (
+                                isinstance(premise, RangeLemma)
+                                and premise.house.house_type == HouseType.BOX
+                            ):
+                                return True
+            return False
+
+        assert any(uses_pointing(step) for step in result.steps)
+
+    def test_claiming_used_in_solve(self) -> None:
+        puzzle = (
+            "004678010"
+            "670195340"
+            "108300567"
+            "850760400"
+            "420003700"
+            "010020056"
+            "961037284"
+            "287410000"
+            "040286100"
+        )
+        board = Board.from_string(puzzle, size=9)
+        solver = Solver([HiddenSingle(), NakedSingle()])
+        result = solver.solve(board)
+        assert result.status == SolveStatus.SOLVED
+
+        def uses_claiming(step: SolveStep) -> bool:
+            theorem = step.theorem
+            for prop in collect_proof(theorem):
+                if isinstance(prop, Elimination):
+                    if prop.house.house_type == HouseType.BOX:
+                        for premise in prop.premises:
+                            if isinstance(
+                                premise, RangeLemma
+                            ) and premise.house.house_type in {
+                                HouseType.ROW,
+                                HouseType.COLUMN,
+                            }:
+                                return True
+            return False
+
+        assert any(uses_claiming(step) for step in result.steps)
