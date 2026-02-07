@@ -44,10 +44,10 @@ Goal: make explanations minimal, policy-driven, and stable.
 
 Goal: progress beyond singles while preserving proof structure.
 
-- Naked pair / hidden pair (domain/range based)
-- Pointing pairs / box-line reduction (range-first)
-- Add 9x9 puzzles that require these rules
-- Tests: rule-specific derivations + end-to-end solves
+- [x] Naked pair / hidden pair (domain/range based)
+- [ ] Pointing pairs / box-line reduction (range-first)
+- [ ] Add 9x9 puzzles that require these rules
+- [x] Tests: rule-specific derivations
 
 ### Phase 5: Advanced Fish
 

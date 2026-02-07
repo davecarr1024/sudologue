@@ -92,6 +92,7 @@ Each theorem is immutable and tied to the board state at the step it was proven.
 2. **Elimination** — for each axiom, eliminate that value from peer cells.
 3. **Domain reduction** — for each empty cell, compute its domain lemma.
 4. **Range reduction** — for each `(house, value)`, compute its range lemma.
+5. **Pair eliminations** — apply naked/hidden pairs to derive additional eliminations; repeat until no new eliminations are found.
 
 **Theorem-producing rules** (priority order):
 
