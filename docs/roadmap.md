@@ -24,7 +24,7 @@ Each step is built bottom-up: fully tested before the next layer starts. Every s
 
 ### Step 4: Propositions `proof/proposition.py`
 - [x] `Axiom(cell, value)` — no premises
-- [x] `Elimination(cell, value, house, premises)` — tuple of Axiom premises
+- [x] `Elimination(cell, value, house, premises)` — tuple of premises (axioms now; lemmas/ranges later)
 - [x] `Lemma(cell, domain, premises)` — tuple of Elimination premises
 - [x] `Theorem(cell, value, rule, premises)` — tuple of Lemma premises
 - [x] `Proposition` union type alias
@@ -34,6 +34,7 @@ Each step is built bottom-up: fully tested before the next layer starts. Every s
 - [x] `Derivation` dataclass holding all axioms, eliminations, lemmas
 - [x] `derive(board) -> Derivation` — eagerly computes all propositions
 - [x] Tests: axiom extraction, elimination derivation, domain reduction, all on 4x4
+ - [x] Derived views: candidate/domain/range computed from eliminations
 
 ### Step 6: Naked Single `proof/rules/naked_single.py`
 - [x] `Rule` protocol
@@ -59,12 +60,19 @@ Each step is built bottom-up: fully tested before the next layer starts. Every s
 - [x] `HiddenSingle.apply(derivation) -> Sequence[Theorem]`
 - [x] Tests: hidden single detection in a house, no false positives
 - [x] End-to-end puzzle requiring hidden single
+- [x] Range-first narration and minimal premises (other cells in house)
+
+### Step 11: 9x9 End-to-End `puzzles/`
+- [x] 9x9 puzzle solve using naked + hidden singles
 
 ## Future Work
 
-- Candidate elimination propositions (premises from lemmas)
+- Optional rename: `Elimination` -> `NotCandidate` for clarity in advanced rules
+- RangeLemma proposition (house, value, cells) derived from candidates
+- Candidate promotion (explicit `Candidate` nodes for narration/debug)
+- Proof minimization (backward slicing with narration policies)
+- Stable proposition IDs for de-duplication and slicing
+- Narration styles (terse/normal/full, range-first variants)
 - Naked pair / hidden pair
-- 9x9 puzzle solves
 - Pointing pairs / box-line reduction
 - X-Wing, Swordfish
-- Multiple narration styles

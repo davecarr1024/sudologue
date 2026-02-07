@@ -14,7 +14,7 @@ Propositions are immutable facts with explicit premises. Together they form a pr
 Axiom: cell (0,3) = 1    [observed from board]
 ```
 
-**Elimination (NotCandidate)** — A derived fact that a cell cannot contain a value, justified by premises (often axioms; future rules may justify eliminations via lemmas or ranges).
+**Elimination (NotCandidate)** — A derived fact that a cell cannot contain a value, justified by premises. In early rules, eliminations are justified directly by axioms; future rules may justify eliminations via lemmas or ranges while preserving the same premise structure.
 
 ```
 Elimination: (2,3) ≠ 1    [from: (0,3) = 1; shared house: column 3]
@@ -36,7 +36,7 @@ Every proposition is a frozen dataclass that holds its conclusion and premise re
 
 ## Derived Views (Candidates, Domains, Ranges)
 
-Candidates are a **derived view**: a value is a candidate if it has not been eliminated in the current derivation. Candidates are defined over the base domain `v ∈ {1..N}`.
+Candidates are a **derived view**: a value is a candidate if it has not been eliminated in the current derivation. Candidates are defined over the base domain `v ∈ {1..N}`. Eliminations remove values from this base domain for a specific cell.
 
 ```
 Candidate(cell, v)  <=>  no elimination (cell ≠ v) exists in the derivation
@@ -94,7 +94,7 @@ Further rules are added incrementally as tests demand them.
 ```
 Theorem(place v at cell)
   <- Lemma(domain(cell) = {v})
-      <- Eliminations(cell ≠ v_i) for excluded values
+      <- Eliminations(cell ≠ v_i) for the values ruled out in this step (base domain minus these eliminations yields {v})
           <- Axioms that justify those eliminations
 ```
 
@@ -159,6 +159,7 @@ Boards validate invariants on construction: no duplicate values in any house and
 2. **Candidate promotion** — if needed for narration or advanced rules, introduce a computed or explicit `Candidate` node without breaking the interface layer.
 3. **Proof minimization** — keep derivation maximal; slice explanations lazily at narration time. Minimization is backward slicing of the proof DAG from a theorem, optionally dropping redundant premises per narration policy. Optional eager scoring can be used to choose among competing theorems.
 4. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
+5. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
 
 ## Testing Strategy
 
