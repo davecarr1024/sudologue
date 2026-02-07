@@ -95,6 +95,31 @@ class TestMultiStepSolve:
         assert len(result.steps) == 3
 
 
+class TestVariedDifficulty:
+    """Additional 4x4 puzzles of varying difficulty (all naked-single solvable)."""
+
+    def test_easy(self) -> None:
+        # Only two cells missing in the first row.
+        board = Board.from_string("1200341221434321", size=4)
+        result = _solver().solve(board)
+        assert result.status == SolveStatus.SOLVED
+        assert len(result.steps) == 2
+
+    def test_medium(self) -> None:
+        # Mixed givens across rows/cols; still naked-single solvable.
+        board = Board.from_string("1030340200430301", size=4)
+        result = _solver().solve(board)
+        assert result.status == SolveStatus.SOLVED
+        assert result.final_board.is_complete
+
+    def test_harder(self) -> None:
+        # Fewer givens, requires more cascading singles.
+        board = Board.from_string("1000040200430001", size=4)
+        result = _solver().solve(board)
+        assert result.status == SolveStatus.SOLVED
+        assert result.final_board.is_complete
+
+
 class TestFullSolveFromSparseBoard:
     """Solve a 4x4 from minimal clues (naked-single solvable)."""
 

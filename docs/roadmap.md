@@ -47,7 +47,7 @@ Each step is built bottom-up: fully tested before the next layer starts. Every s
 
 ### Step 8: 4x4 End-to-End `puzzles/`
 - [x] Full 4x4 board solves with proof chain verification
-- [ ] Multiple puzzles of varying difficulty
+- [x] Multiple puzzles of varying difficulty
 
 ### Step 9: CLI
 - [x] `sudologue` command via poetry script entry point
