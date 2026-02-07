@@ -279,3 +279,20 @@ class TestHiddenSingleSolve:
         result = solver.solve(board)
         assert len(result.steps) > 0
         assert result.steps[0].theorem.rule == "hidden single"
+
+
+class TestHiddenSingleTrace:
+    """Verify a multi-step hidden-single trace on a sparse board."""
+
+    def test_hidden_single_chain_then_stuck(self) -> None:
+        board = Board.from_string("1200001221000000", size=4)
+        solver = Solver([NakedSingle(), HiddenSingle()])
+        result = solver.solve(board)
+        assert len(result.steps) == 2
+        assert result.steps[0].theorem.rule == "hidden single"
+        assert result.steps[0].theorem.cell == Cell(3, 3)
+        assert result.steps[0].theorem.value == 1
+        assert result.steps[1].theorem.rule == "hidden single"
+        assert result.steps[1].theorem.cell == Cell(3, 2)
+        assert result.steps[1].theorem.value == 2
+        assert result.status == SolveStatus.STUCK
