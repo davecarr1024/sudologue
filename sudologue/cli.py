@@ -42,9 +42,9 @@ def format_proof(result: SolveResult) -> str:
         thm = step.theorem
         lines.append(f"Step {i}: {thm} [{thm.rule}]")
 
-        for lemma in thm.premises:
-            lines.append(f"  {lemma}")
-            for elim in lemma.premises:
+        for premise in thm.premises:
+            lines.append(f"  {premise}")
+            for elim in premise.premises:
                 axiom = elim.premises[0]
                 lines.append(f"    {elim} because {axiom} in {elim.house}")
         lines.append("")

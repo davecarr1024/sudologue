@@ -32,6 +32,20 @@ NotCandidate = Elimination
 
 
 @dataclass(frozen=True)
+class RangeLemma:
+    """Possible cells in a house for a value after eliminations."""
+
+    house: House
+    value: int
+    cells: tuple[Cell, ...]
+    premises: tuple[Elimination, ...]
+
+    def __str__(self) -> str:
+        cells = ", ".join(str(cell) for cell in self.cells)
+        return f"range of {self.house} for {self.value} = {{{cells}}}"
+
+
+@dataclass(frozen=True)
 class Lemma:
     """Remaining possible values for a cell after all eliminations."""
 
@@ -51,10 +65,11 @@ class Theorem:
     cell: Cell
     value: int
     rule: str
-    premises: tuple[Lemma, ...]
+    premises: tuple["Premise", ...]
 
     def __str__(self) -> str:
         return f"place {self.value} at {self.cell}"
 
 
-Proposition = Axiom | Elimination | Lemma | Theorem
+Premise = Lemma | RangeLemma
+Proposition = Axiom | Elimination | RangeLemma | Lemma | Theorem

@@ -26,6 +26,12 @@ Elimination: (2,3) ≠ 1    [from: (0,3) = 1; shared house: column 3]
 Lemma: domain of (2,3) = {4}    [from: (2,3) ≠ 1, (2,3) ≠ 2, (2,3) ≠ 3]
 ```
 
+**RangeLemma (Range)** — Remaining possible cells for a value in a house after eliminations.
+
+```
+RangeLemma: range of row 3 for 1 = {(3,3)}    [from: (3,0) ≠ 1, (3,1) ≠ 1, (3,2) ≠ 1]
+```
+
 **Theorem** — A proven placement derived by a rule.
 
 ```
@@ -49,7 +55,7 @@ Domain: domain(cell) = {v | Candidate(cell, v)}
 Range:  range(house, v) = {cell in house | Candidate(cell, v)}
 ```
 
-These views are computed, not stored as propositions yet. This keeps proofs clean and avoids negation-as-failure semantics in the DAG while still allowing a future promotion to explicit `Candidate` or `RangeLemma` nodes.
+These views are computed, and Range is also materialized as a `RangeLemma` proposition for proof narration. This keeps proofs clean while allowing a future promotion to explicit `Candidate` nodes if needed.
 
 **Derived-View Interfaces (stable API)**
 
@@ -79,6 +85,7 @@ Each theorem is immutable and tied to the board state at the step it was proven.
 1. **Axiom extraction** — create axioms for all placed values.
 2. **Elimination** — for each axiom, eliminate that value from peer cells.
 3. **Domain reduction** — for each empty cell, compute its domain lemma.
+4. **Range reduction** — for each `(house, value)`, compute its range lemma.
 
 **Theorem-producing rules** (priority order):
 
@@ -109,14 +116,16 @@ flowchart TD
 
 ```
 Theorem(place v at target)  [hidden single in house H]
-  <- Eliminations(other_cell ≠ v) for all other cells in H
-     <- Axioms (via house relationships)
+  <- RangeLemma(range(H, v) = {target})
+     <- Eliminations(other_cell ≠ v) for all other cells in H
+        <- Axioms (via house relationships)
 ```
 
 ```mermaid
 flowchart TD
   A2[Axioms] --> E2[Eliminations: other cells ≠ v]
-  E2 --> T2[Theorem: place v at target]
+  E2 --> R2[Range Lemma]
+  R2 --> T2[Theorem: place v at target]
 ```
 
 ## Narration Policy
@@ -155,11 +164,10 @@ Boards validate invariants on construction: no duplicate values in any house and
 
 ## Future Extensions (Range-First + Minimization)
 
-1. **RangeLemma** — optional first-class proposition: `RangeLemma(house, value, cells, premises)` derived from candidate facts.
-2. **Candidate promotion** — if needed for narration or advanced rules, introduce a computed or explicit `Candidate` node without breaking the interface layer.
-3. **Proof minimization** — keep derivation maximal; slice explanations lazily at narration time. Minimization is backward slicing of the proof DAG from a theorem, optionally dropping redundant premises per narration policy. Optional eager scoring can be used to choose among competing theorems.
-4. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
-5. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
+1. **Candidate promotion** — if needed for narration or advanced rules, introduce a computed or explicit `Candidate` node without breaking the interface layer.
+2. **Proof minimization** — keep derivation maximal; slice explanations lazily at narration time. Minimization is backward slicing of the proof DAG from a theorem, optionally dropping redundant premises per narration policy. Optional eager scoring can be used to choose among competing theorems.
+3. **Advanced rules** — naked/hidden pairs, pointing pairs, box-line reduction, X-Wing, Swordfish.
+4. **Stable proposition IDs** — propositions can be hashable by `(type, conclusion fields)` to enable de-duplication and proof slicing without relying on instance identity.
 
 ## Testing Strategy
 

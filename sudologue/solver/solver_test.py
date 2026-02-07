@@ -2,6 +2,7 @@ import pytest
 
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
+from sudologue.proof.proposition import Lemma
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solve_result import SolveStatus
 from sudologue.solver.solver import Solver
@@ -116,4 +117,5 @@ class TestSolverProofInspection:
             thm = step.theorem
             assert len(thm.premises) > 0
             lemma = thm.premises[0]
+            assert isinstance(lemma, Lemma)
             assert thm.value in lemma.domain or len(lemma.domain) == 1

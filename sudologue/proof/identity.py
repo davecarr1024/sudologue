@@ -1,6 +1,13 @@
 from collections.abc import Iterable
 
-from sudologue.proof.proposition import Axiom, Elimination, Lemma, Proposition, Theorem
+from sudologue.proof.proposition import (
+    Axiom,
+    Elimination,
+    Lemma,
+    Proposition,
+    RangeLemma,
+    Theorem,
+)
 
 PropId = tuple[object, ...]
 
@@ -12,6 +19,15 @@ def prop_id(prop: Proposition) -> PropId:
         return ("Elimination", prop.cell.row, prop.cell.col, prop.value)
     if isinstance(prop, Lemma):
         return ("Lemma", prop.cell.row, prop.cell.col, tuple(sorted(prop.domain)))
+    if isinstance(prop, RangeLemma):
+        cells = tuple((cell.row, cell.col) for cell in prop.cells)
+        return (
+            "RangeLemma",
+            prop.house.house_type,
+            prop.house.index,
+            prop.value,
+            cells,
+        )
     assert isinstance(prop, Theorem)
     return ("Theorem", prop.cell.row, prop.cell.col, prop.value)
 

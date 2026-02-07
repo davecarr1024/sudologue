@@ -146,6 +146,22 @@ class TestDeriveLemmas:
         assert Cell(2, 0) not in lemma_cells
 
 
+class TestDeriveRanges:
+    def test_range_lemma_for_hidden_single(self) -> None:
+        board = Board.from_string("1200001221000000", size=4)
+        d = derive(board)
+        range_lemma = next(
+            rl
+            for rl in d.range_lemmas
+            if rl.house.house_type == HouseType.ROW
+            and rl.house.index == 3
+            and rl.value == 1
+        )
+        assert range_lemma.cells == (Cell(3, 3),)
+        premise_cells = {elim.cell for elim in range_lemma.premises}
+        assert premise_cells == {Cell(3, 0), Cell(3, 1), Cell(3, 2)}
+
+
 class TestDerivationImmutability:
     def test_frozen(self) -> None:
         board = Board.from_string("0000000000000000", size=4)

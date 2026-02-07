@@ -159,6 +159,7 @@ class TestProofChainIntegrity:
         result = _solver().solve(board)
         for step in result.steps:
             lemma = step.theorem.premises[0]
+            assert isinstance(lemma, Lemma)
             for elim in lemma.premises:
                 assert isinstance(elim, Elimination)
                 assert elim.cell == lemma.cell
@@ -168,6 +169,7 @@ class TestProofChainIntegrity:
         result = _solver().solve(board)
         for step in result.steps:
             lemma = step.theorem.premises[0]
+            assert isinstance(lemma, Lemma)
             for elim in lemma.premises:
                 for axiom in elim.premises:
                     assert isinstance(axiom, Axiom)
@@ -182,6 +184,7 @@ class TestProofChainIntegrity:
 
         # Theorem -> Lemma
         lemma = thm.premises[0]
+        assert isinstance(lemma, Lemma)
         assert lemma.cell == thm.cell
 
         # Lemma -> Eliminations -> Axioms
@@ -196,6 +199,7 @@ class TestProofChainIntegrity:
         result = _solver().solve(board)
         for step in result.steps:
             lemma = step.theorem.premises[0]
+            assert isinstance(lemma, Lemma)
             eliminated = {e.value for e in lemma.premises}
             domain = lemma.domain
             # Eliminated + domain should cover some subset of 1..4

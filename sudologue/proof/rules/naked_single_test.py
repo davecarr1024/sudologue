@@ -1,6 +1,7 @@
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
 from sudologue.proof.engine import derive
+from sudologue.proof.proposition import Lemma
 from sudologue.proof.rules.naked_single import NakedSingle
 
 
@@ -34,8 +35,10 @@ class TestNakedSingle:
         theorems = NakedSingle().apply(derivation)
         thm = next(t for t in theorems if t.cell == Cell(2, 3))
         assert len(thm.premises) == 1
-        assert thm.premises[0].cell == Cell(2, 3)
-        assert thm.premises[0].domain == frozenset({4})
+        lemma = thm.premises[0]
+        assert isinstance(lemma, Lemma)
+        assert lemma.cell == Cell(2, 3)
+        assert lemma.domain == frozenset({4})
 
     def test_no_theorems_when_no_singletons(self) -> None:
         # Empty board: all domains are {1,2,3,4}, no singletons
@@ -69,6 +72,7 @@ class TestNakedSingle:
 
         # theorem -> lemma -> eliminations -> axioms
         lemma = thm.premises[0]
+        assert isinstance(lemma, Lemma)
         assert lemma.cell == Cell(2, 3)
 
         eliminated_values = {e.value for e in lemma.premises}

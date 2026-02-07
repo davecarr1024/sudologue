@@ -2,7 +2,14 @@ import pytest
 
 from sudologue.model.cell import Cell
 from sudologue.model.house import House, HouseType, all_houses
-from sudologue.proof.proposition import Axiom, Elimination, Lemma, NotCandidate, Theorem
+from sudologue.proof.proposition import (
+    Axiom,
+    Elimination,
+    Lemma,
+    NotCandidate,
+    RangeLemma,
+    Theorem,
+)
 
 
 def _row0_4x4() -> House:
@@ -98,6 +105,26 @@ class TestLemma:
         lemma = Lemma(Cell(0, 0), frozenset({1, 2}), ())
         with pytest.raises(AttributeError):
             lemma.domain = frozenset({1})  # type: ignore[misc]
+
+
+class TestRangeLemma:
+    def test_construction(self) -> None:
+        house = _row0_4x4()
+        rl = RangeLemma(house, 2, (Cell(0, 1), Cell(0, 2)), ())
+        assert rl.house == house
+        assert rl.value == 2
+        assert rl.cells == (Cell(0, 1), Cell(0, 2))
+
+    def test_str(self) -> None:
+        house = _row0_4x4()
+        rl = RangeLemma(house, 2, (Cell(0, 1),), ())
+        assert str(rl) == f"range of {house} for 2 = {{(0,1)}}"
+
+    def test_frozen(self) -> None:
+        house = _row0_4x4()
+        rl = RangeLemma(house, 2, (Cell(0, 1),), ())
+        with pytest.raises(AttributeError):
+            rl.value = 3  # type: ignore[misc]
 
 
 class TestTheorem:
