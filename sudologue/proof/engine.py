@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
-from sudologue.model.house import House, all_houses
+from sudologue.model.house import House, HouseType, all_houses
 from sudologue.proof.proposition import Axiom, Candidate, Elimination, Lemma, RangeLemma
 
 
@@ -29,9 +29,13 @@ def derive(board: Board) -> Derivation:
     while True:
         lemmas = _derive_lemmas(board, eliminations)
         range_lemmas = _derive_ranges(board, eliminations)
-        new_elims = _derive_pair_eliminations(
+        pair_elims = _derive_pair_eliminations(
             board.size, lemmas, range_lemmas, eliminations
         )
+        point_elims = _derive_pointing_eliminations(
+            board.size, lemmas, range_lemmas, eliminations + pair_elims
+        )
+        new_elims = pair_elims + point_elims
         if not new_elims:
             break
         eliminations = eliminations + new_elims
@@ -199,6 +203,100 @@ def _derive_pair_eliminations(
                     results.append(Elimination(cell, value, house, tuple(ranges)))
 
     return tuple(results)
+
+
+def _derive_pointing_eliminations(
+    size: int,
+    lemmas: tuple[Lemma, ...],
+    range_lemmas: tuple[RangeLemma, ...],
+    eliminations: tuple[Elimination, ...],
+) -> tuple[Elimination, ...]:
+    """Derive eliminations from pointing pairs and box-line reductions."""
+    if size == 0:
+        return ()
+
+    existing_keys = {(elim.cell, elim.value) for elim in eliminations}
+    lemmas_by_cell = {lemma.cell: lemma for lemma in lemmas}
+    results: list[Elimination] = []
+
+    houses = all_houses(size)
+    row_houses = {h.index: h for h in houses if h.house_type == HouseType.ROW}
+    col_houses = {h.index: h for h in houses if h.house_type == HouseType.COLUMN}
+    box_houses = {h.index: h for h in houses if h.house_type == HouseType.BOX}
+
+    box_size = int(size**0.5)
+
+    def box_index(cell: Cell) -> int:
+        return (cell.row // box_size) * box_size + (cell.col // box_size)
+
+    # Pointing: box -> row/column
+    for range_lemma in range_lemmas:
+        if range_lemma.house.house_type != HouseType.BOX or not range_lemma.cells:
+            continue
+        rows = {cell.row for cell in range_lemma.cells}
+        cols = {cell.col for cell in range_lemma.cells}
+
+        if len(rows) == 1:
+            row_idx = next(iter(rows))
+            row_house = row_houses[row_idx]
+            for cell in row_house.cells:
+                if cell in range_lemma.cells or cell not in lemmas_by_cell:
+                    continue
+                key = (cell, range_lemma.value)
+                if key in existing_keys:
+                    continue
+                existing_keys.add(key)
+                results.append(
+                    Elimination(cell, range_lemma.value, row_house, (range_lemma,))
+                )
+
+        if len(cols) == 1:
+            col_idx = next(iter(cols))
+            col_house = col_houses[col_idx]
+            for cell in col_house.cells:
+                if cell in range_lemma.cells or cell not in lemmas_by_cell:
+                    continue
+                key = (cell, range_lemma.value)
+                if key in existing_keys:
+                    continue
+                existing_keys.add(key)
+                results.append(
+                    Elimination(cell, range_lemma.value, col_house, (range_lemma,))
+                )
+
+    # Claiming: row/column -> box
+    for range_lemma in range_lemmas:
+        if range_lemma.house.house_type not in {HouseType.ROW, HouseType.COLUMN}:
+            continue
+        if not range_lemma.cells:
+            continue
+        boxes = {box_index(cell) for cell in range_lemma.cells}
+        if len(boxes) != 1:
+            continue
+        box_idx = next(iter(boxes))
+        box_house = box_houses[box_idx]
+        for cell in box_house.cells:
+            if cell in range_lemma.cells or cell not in lemmas_by_cell:
+                continue
+            key = (cell, range_lemma.value)
+            if key in existing_keys:
+                continue
+            existing_keys.add(key)
+            results.append(
+                Elimination(cell, range_lemma.value, box_house, (range_lemma,))
+            )
+
+    return tuple(results)
+
+
+def derive_pointing_eliminations(
+    size: int,
+    lemmas: tuple[Lemma, ...],
+    range_lemmas: tuple[RangeLemma, ...],
+    eliminations: tuple[Elimination, ...],
+) -> tuple[Elimination, ...]:
+    """Public wrapper for testing pointing/claiming eliminations."""
+    return _derive_pointing_eliminations(size, lemmas, range_lemmas, eliminations)
 
 
 def _derive_candidates(lemmas: tuple[Lemma, ...]) -> tuple[Candidate, ...]:

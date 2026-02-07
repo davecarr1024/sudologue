@@ -1,7 +1,7 @@
 from sudologue.model.board import Board
 from sudologue.model.cell import Cell
-from sudologue.model.house import HouseType
-from sudologue.proof.engine import derive
+from sudologue.model.house import HouseType, all_houses
+from sudologue.proof.engine import derive, derive_pointing_eliminations
 from sudologue.proof.proposition import Axiom, Candidate, Lemma, RangeLemma
 
 
@@ -122,9 +122,9 @@ class TestDeriveLemmas:
         board = Board.from_string("0001000230000000", size=4)
         d = derive(board)
         # Cell (3,3) is in col 3 (has 1, 2) and box 3 (no other givens there)
-        # and row 3 (no givens). So eliminations: ≠1, ≠2. Domain = {3, 4}.
+        # and row 3 (no givens). So eliminations: ≠1, ≠2, ≠4. Domain = {3}.
         lemma_33 = next(lem for lem in d.lemmas if lem.cell == Cell(3, 3))
-        assert lemma_33.domain == frozenset({3, 4})
+        assert lemma_33.domain == frozenset({3})
 
     def test_lemmas_in_scan_order(self) -> None:
         board = Board.from_string("0001000230000000", size=4)
@@ -186,6 +186,49 @@ class TestDerivePairs:
         assert all(isinstance(p, RangeLemma) for p in elim.premises)
         premise_values = {p.value for p in elim.premises if isinstance(p, RangeLemma)}
         assert premise_values == {3, 4}
+
+
+class TestDerivePointing:
+    def test_pointing_pair_elimination(self) -> None:
+        box = next(
+            house
+            for house in all_houses(4)
+            if house.house_type == HouseType.BOX and house.index == 0
+        )
+        range_lemma = RangeLemma(box, 1, (Cell(0, 0), Cell(0, 1)), ())
+        lemmas = (
+            Lemma(Cell(0, 2), frozenset({1, 2, 3, 4}), ()),
+            Lemma(Cell(0, 3), frozenset({1, 2, 3, 4}), ()),
+        )
+        eliminations = derive_pointing_eliminations(4, lemmas, (range_lemma,), ())
+        elim_keys = {(elim.cell, elim.value) for elim in eliminations}
+        assert (Cell(0, 2), 1) in elim_keys
+        assert (Cell(0, 3), 1) in elim_keys
+        elim = next(e for e in eliminations if e.cell == Cell(0, 2) and e.value == 1)
+        assert any(
+            isinstance(p, RangeLemma) and p.house.house_type == HouseType.BOX
+            for p in elim.premises
+        )
+
+    def test_claiming_elimination(self) -> None:
+        puzzle = (
+            "004678010"
+            "670195340"
+            "108300567"
+            "850760400"
+            "420003700"
+            "010020056"
+            "961037284"
+            "287410000"
+            "040286100"
+        )
+        board = Board.from_string(puzzle, size=9)
+        d = derive(board)
+        elim = next(e for e in d.eliminations if e.cell == Cell(0, 0) and e.value == 3)
+        assert any(
+            isinstance(p, RangeLemma) and p.house.house_type == HouseType.COLUMN
+            for p in elim.premises
+        )
 
 
 class TestDerivationImmutability:
