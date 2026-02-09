@@ -46,7 +46,7 @@ Goal: make explanations minimal, policy-driven, and stable.
 Goal: progress beyond singles while preserving proof structure.
 
 - [x] Pointing pairs / box-line reduction (range-first)
-- [ ] Add 9x9 puzzles that require these rules
+- [x] Add 9x9 puzzles that require these rules
 - [x] Tests: rule-specific derivations
 
 ### Phase 5: Structure Lemmas

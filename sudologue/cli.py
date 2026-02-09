@@ -1,6 +1,7 @@
 """Command-line interface for sudologue."""
 
 import argparse
+import math
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -99,7 +100,7 @@ def _format_elimination_reason(
 def format_board(board: Board) -> str:
     """Render a board as a human-readable grid."""
     lines: list[str] = []
-    box = int(board.size**0.5)
+    box = math.isqrt(board.size)
     for r in range(board.size):
         if r > 0 and r % box == 0:
             # Horizontal separator between box bands
