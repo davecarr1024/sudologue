@@ -74,3 +74,18 @@ class TestCollectProof:
         assert ax1 in proof
         assert ax2 in proof
         assert ax3 in proof
+
+    def test_shared_premise_deduplicates(self) -> None:
+        """Two eliminations sharing an axiom should not duplicate it in the proof."""
+        ax = Axiom(Cell(0, 0), 1)
+        row = _row0_4x4()
+        e1 = Elimination(Cell(0, 1), 1, row, (ax,))
+        e2 = Elimination(Cell(0, 2), 1, row, (ax,))
+        lemma = Lemma(Cell(0, 3), frozenset({4}), (e1, e2))
+        theorem = Theorem(Cell(0, 3), 4, "naked single", (lemma,))
+
+        proof = collect_proof(theorem)
+        # theorem + lemma + e1 + e2 + ax (shared, counted once) = 5
+        assert len(proof) == 5
+        axiom_count = sum(1 for p in proof if isinstance(p, Axiom))
+        assert axiom_count == 1

@@ -2,9 +2,13 @@
 
 from pathlib import Path
 
-from sudologue.cli import format_board, format_proof, main
+from sudologue.cli import format_board, format_elimination_reason, format_proof, main
 from sudologue.model.board import Board
+from sudologue.model.cell import Cell
+from sudologue.model.house import HouseType, all_houses
 from sudologue.narration.policy import Verbosity
+from sudologue.proof.proposition import Axiom, Elimination, RangeLemma
+from sudologue.proof.rules.hidden_single import HiddenSingle
 from sudologue.proof.rules.naked_single import NakedSingle
 from sudologue.solver.solver import Solver
 
@@ -76,6 +80,110 @@ class TestFormatProof:
         assert "Step 1:" in text
         assert "domain" not in text
         assert "because" not in text
+
+    def test_normal_output(self) -> None:
+        board = Board.from_string("1230341221434321", size=4)
+        result = Solver([NakedSingle()]).solve(board)
+        text = format_proof(result, verbosity=Verbosity.NORMAL)
+        assert "Step 1:" in text
+        assert "≠" in text
+        # NORMAL excludes axioms, so elimination reasons (axioms) are filtered
+        # and eliminations are shown without "because" annotations
+        assert "Solved!" in text
+
+    def test_pointing_claiming_output(self) -> None:
+        # This puzzle requires pointing/claiming to solve
+        puzzle = (
+            "004678010"
+            "670195340"
+            "108300567"
+            "850760400"
+            "420003700"
+            "010020056"
+            "961037284"
+            "287410000"
+            "040286100"
+        )
+        board = Board.from_string(puzzle, size=9)
+        result = Solver([NakedSingle(), HiddenSingle()]).solve(board)
+        text = format_proof(result)
+        assert "Solved!" in text
+        # Should contain pointing/claiming narration
+        assert "confined to" in text or "because" in text
+
+
+def _row0_4x4():
+    return next(
+        h for h in all_houses(4) if h.house_type == HouseType.ROW and h.index == 0
+    )
+
+
+def _box0_4x4():
+    return next(
+        h for h in all_houses(4) if h.house_type == HouseType.BOX and h.index == 0
+    )
+
+
+class TestFormatEliminationReason:
+    def test_no_reasons_returns_none(self) -> None:
+        elim = Elimination(Cell(0, 1), 1, _row0_4x4(), (Axiom(Cell(0, 0), 1),))
+        assert format_elimination_reason(elim, []) is None
+
+    def test_single_axiom_reason(self) -> None:
+        ax = Axiom(Cell(0, 0), 1)
+        elim = Elimination(Cell(0, 1), 1, _row0_4x4(), (ax,))
+        result = format_elimination_reason(elim, [ax])
+        assert result is not None
+        assert "because" in result
+        assert "row 0" in result
+
+    def test_pointing_box_to_row(self) -> None:
+        # A RangeLemma from a box confining a value to a row
+        box = _box0_4x4()
+        row = _row0_4x4()
+        rl = RangeLemma(box, 1, (Cell(0, 0), Cell(0, 1)), ())
+        elim = Elimination(Cell(0, 2), 1, row, (rl,))
+        result = format_elimination_reason(elim, [rl])
+        assert result is not None
+        assert "confined to" in result
+
+    def test_claiming_row_to_box(self) -> None:
+        # A RangeLemma from a row confining a value to a box
+        row = _row0_4x4()
+        box = _box0_4x4()
+        rl = RangeLemma(row, 1, (Cell(0, 0), Cell(0, 1)), ())
+        elim = Elimination(Cell(1, 0), 1, box, (rl,))
+        result = format_elimination_reason(elim, [rl])
+        assert result is not None
+        assert "confined to" in result
+
+    def test_range_excludes_cell(self) -> None:
+        # RangeLemma from same house where target cell is not in range
+        row = _row0_4x4()
+        rl = RangeLemma(row, 1, (Cell(0, 2), Cell(0, 3)), ())
+        elim = Elimination(Cell(0, 0), 1, row, (rl,))
+        result = format_elimination_reason(elim, [rl])
+        assert result is not None
+        assert "excludes" in result
+
+    def test_range_value_mismatch_fallback(self) -> None:
+        # RangeLemma with a different value than the elimination
+        row = _row0_4x4()
+        rl = RangeLemma(row, 2, (Cell(0, 1),), ())
+        elim = Elimination(Cell(0, 0), 1, row, (rl,))
+        result = format_elimination_reason(elim, [rl])
+        assert result is not None
+        assert "because" in result
+
+    def test_fallback_for_mixed_premise_types(self) -> None:
+        # Mix of Axiom and RangeLemma (neither all-RangeLemma nor all-Lemma)
+        ax = Axiom(Cell(0, 0), 1)
+        row = _row0_4x4()
+        rl = RangeLemma(row, 1, (Cell(0, 1),), ())
+        elim = Elimination(Cell(0, 2), 1, row, (ax, rl))
+        result = format_elimination_reason(elim, [ax, rl])
+        assert result is not None
+        assert "because" in result
 
 
 class TestMainCli:

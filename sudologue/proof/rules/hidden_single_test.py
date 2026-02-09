@@ -32,3 +32,11 @@ class TestHiddenSingle:
         board = Board.from_string("0000000000000000", size=4)
         derivation = derive(board)
         assert HiddenSingle().apply(derivation) == []
+
+    def test_no_duplicate_theorems_for_same_cell_value(self) -> None:
+        """A hidden single in multiple houses should produce only one theorem."""
+        board = Board.from_string("1200001221000000", size=4)
+        derivation = derive(board)
+        theorems = HiddenSingle().apply(derivation)
+        keys = [(t.cell, t.value) for t in theorems]
+        assert len(keys) == len(set(keys))
