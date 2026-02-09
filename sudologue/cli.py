@@ -1,6 +1,7 @@
 """Command-line interface for sudologue."""
 
 import argparse
+import math
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -23,11 +24,11 @@ from sudologue.solver.solve_result import SolveResult, SolveStatus
 from sudologue.solver.solver import Solver
 
 
-def _format_cells(cells: tuple[object, ...]) -> str:
+def format_cells(cells: tuple[object, ...]) -> str:
     return ", ".join(str(cell) for cell in cells)
 
 
-def _format_elimination_reason(
+def format_elimination_reason(
     elim: Elimination, reasons: Sequence[EliminationPremise]
 ) -> str | None:
     if not reasons:
@@ -46,7 +47,7 @@ def _format_elimination_reason(
 
         if len(range_reasons) == 1:
             reason = range_reasons[0]
-            cells = _format_cells(reason.cells)
+            cells = format_cells(reason.cells)
             if reason.house != elim.house:
                 if (
                     reason.house.house_type == HouseType.BOX
@@ -71,7 +72,7 @@ def _format_elimination_reason(
 
         if len(houses) == 1 and len(cells_sets) == 1:
             house = next(iter(houses))
-            cells = _format_cells(next(iter(cells_sets)))
+            cells = format_cells(next(iter(cells_sets)))
             values_text = ", ".join(str(value) for value in values)
             return (
                 f"because in {house}, only {{{values_text}}} fit in "
@@ -87,7 +88,7 @@ def _format_elimination_reason(
             domain = next(iter(domains))
             if len(domain) == 2:
                 values_text = ", ".join(str(value) for value in sorted(domain))
-                cells = _format_cells(tuple(reason.cell for reason in lemma_reasons))
+                cells = format_cells(tuple(reason.cell for reason in lemma_reasons))
                 return (
                     f"because in {elim.house}, {{{cells}}} have domain "
                     f"{{{values_text}}}, so eliminate those digits from other cells"
@@ -99,7 +100,7 @@ def _format_elimination_reason(
 def format_board(board: Board) -> str:
     """Render a board as a human-readable grid."""
     lines: list[str] = []
-    box = int(board.size**0.5)
+    box = math.isqrt(board.size)
     for r in range(board.size):
         if r > 0 and r % box == 0:
             # Horizontal separator between box bands
@@ -143,7 +144,7 @@ def format_proof(result: SolveResult, verbosity: Verbosity = Verbosity.FULL) -> 
                 reasons = [
                     reason for reason in elim.premises if prop_id(reason) in slice_ids
                 ]
-                reason_text = _format_elimination_reason(elim, reasons)
+                reason_text = format_elimination_reason(elim, reasons)
                 if reason_text is None:
                     lines.append(f"    {elim}")
                 else:

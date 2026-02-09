@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 
 from sudologue.model.board import Board
@@ -173,7 +174,7 @@ def _derive_pointing_eliminations(
     col_houses = {h.index: h for h in houses if h.house_type == HouseType.COLUMN}
     box_houses = {h.index: h for h in houses if h.house_type == HouseType.BOX}
 
-    box_size = int(size**0.5)
+    box_size = math.isqrt(size)
 
     def box_index(cell: Cell) -> int:
         return (cell.row // box_size) * box_size + (cell.col // box_size)

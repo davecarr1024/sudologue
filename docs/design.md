@@ -214,21 +214,26 @@ Tests live alongside the code they test. Full board solve tests live in a top-le
 
 ```
 sudologue/
+    cli.py                   # CLI entry point and proof formatting
     model/
         cell.py              # Cell position
         house.py             # Row, Column, Box; peer/house lookups
         board.py             # Board state, parameterized by size
     proof/
-        proposition.py       # Axiom, Elimination, Lemma, Theorem
+        proposition.py       # Axiom, Elimination, Lemma, RangeLemma, Candidate, Theorem
         engine.py            # Derives propositions from board state
+        identity.py          # Stable proposition IDs for deduplication
+        minimizer.py         # Proof slicing (terse/normal/full verbosity)
+        scoring.py           # Proof size scorer for theorem selection
         rules/
+            rule.py          # SelectionRule & EliminationRule protocols
             naked_single.py  # Domain = {v} -> place v
             hidden_single.py # Value in only one cell in house -> place
     solver/
         solver.py            # Solve loop: derive -> prove -> place -> repeat
         solve_result.py      # SolveResult, SolveStatus
     narration/
-        narrator.py          # Proof chain -> human-readable text
+        policy.py            # Verbosity enum (TERSE, NORMAL, FULL)
 puzzles/
     four_by_four_test.py     # 4x4 full board solves
     nine_by_nine_test.py     # 9x9 solve using singles
@@ -236,7 +241,7 @@ puzzles/
 
 ## Tooling
 
-- **Python 3.12+** — Modern language features without pinning to pre-release runtimes
+- **Python 3.13+** — Modern language features
 - **Poetry** — Dependency management
 - **pyproject.toml** — Single-file project configuration
 - **pytest** — Test framework with coverage via `pytest-cov`
