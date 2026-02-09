@@ -5,7 +5,7 @@ description = "A Sudoku solver that never guesses — every placement is a prove
 authors = ["Your Name <your.email@example.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.14"
+python = "^3.13"
 pytest = "^8.3.5"
 pytest-cov = "^6.0.0"
 pytest-subtests = "^0.14.1"
@@ -43,7 +43,7 @@ unfixable = []
 include = ["sudologue", "puzzles"]
 exclude = ["**/node_modules", "**/__pycache__"]
 strict = ["sudologue"]
-pythonVersion = "3.14"
+pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
 [tool.pytest.ini_options]

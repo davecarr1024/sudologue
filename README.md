@@ -55,7 +55,7 @@ sudologue puzzles.txt
 
 ## Installation
 
-Requires Python 3.14+.
+Requires Python 3.13+.
 
 ```bash
 poetry install

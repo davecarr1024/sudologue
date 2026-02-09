@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Sudologue is a proof-based Sudoku solver written in pure Python 3.14+. Every cell placement is a formally proven theorem backed by an auditable proof chain — no guessing or backtracking. The solver treats Sudoku as a formal logic problem where propositions form a DAG from axioms (given values) through eliminations and lemmas to theorems (placements).
+Sudologue is a proof-based Sudoku solver written in pure Python 3.13+. Every cell placement is a formally proven theorem backed by an auditable proof chain — no guessing or backtracking. The solver treats Sudoku as a formal logic problem where propositions form a DAG from axioms (given values) through eliminations and lemmas to theorems (placements).
 
 ## Quick Reference
 
